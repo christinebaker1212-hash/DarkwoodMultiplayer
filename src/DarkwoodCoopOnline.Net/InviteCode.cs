@@ -5,15 +5,42 @@ using System.Net.Sockets;
 
 namespace DarkwoodCoopOnline.Net;
 
-// Invite codes: the public IPv4 address plus which of the 8 game ports, in 7 Crockford base-32
-// characters and a check character: "K7QM-3XPA" (the same scheme as Moemon Emerald Kai Co-op).
+// Invite codes: 7 Crockford base-32 characters and a check character, "K7QM-3XPA" (Moemon Emerald Kai
+// Co-op's scheme). 35 bits: 3 bits of "which" + 32 bits of "where".
+//   which 0-6: the host's public IPv4 address and game port Proto.DefaultPort + which (router opened)
+//   which 7:   the host's Steam account: the game connects through Steam (Valve's relay), so it works
+//              behind any router, with nothing to set up - used when the router can't be opened
 public static class InviteCode
 {
 	private const string Alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
+	public const int SteamMarker = 7;
+
+	private const ulong SteamIdBase = 76561197960265728uL;
+
 	public static string Make(uint ip, int port)
 	{
-		ulong num = ((ulong)((uint)(port - Proto.DefaultPort) & 7u) << 32) | ip;
+		return Encode(((ulong)((uint)(port - Proto.DefaultPort) & 7u) << 32) | ip);
+	}
+
+	public static string MakeSteam(ulong steamId64)
+	{
+		return Encode(((ulong)SteamMarker << 32) | (uint)(steamId64 & 0xFFFFFFFFu));
+	}
+
+	public static bool TryParseSteam(string code, out ulong steamId64)
+	{
+		steamId64 = 0uL;
+		if (!TryDecode(code, out var v) || (int)((v >> 32) & 7) != SteamMarker || (uint)v == 0)
+		{
+			return false;
+		}
+		steamId64 = SteamIdBase + (uint)v;
+		return true;
+	}
+
+	private static string Encode(ulong num)
+	{
 		char[] array = new char[8];
 		for (int num2 = 6; num2 >= 0; num2--)
 		{
@@ -52,6 +79,18 @@ public static class InviteCode
 	{
 		ip = 0u;
 		port = 0;
+		if (!TryDecode(code, out var v) || (int)((v >> 32) & 7) == SteamMarker)
+		{
+			return false;
+		}
+		ip = (uint)v;
+		port = Proto.DefaultPort + (int)((v >> 32) & 7);
+		return ip != 0;
+	}
+
+	private static bool TryDecode(string code, out ulong v)
+	{
+		v = 0uL;
 		if (string.IsNullOrEmpty(code))
 		{
 			return false;
@@ -85,9 +124,8 @@ public static class InviteCode
 		{
 			return false;
 		}
-		ip = (uint)num2;
-		port = Proto.DefaultPort + (int)((num2 >> 32) & 7);
-		return ip != 0;
+		v = num2;
+		return true;
 	}
 
 	public static string IpToString(uint ip)
@@ -113,7 +151,7 @@ public static class InviteCode
 		host = null;
 		port = Proto.DefaultPort;
 		input = (input ?? "").Trim().Replace(';', '.').Replace(',', '.');
-		if (input.Length == 0)
+		if (input.Length == 0 || TryParseSteam(input, out var _))
 		{
 			return false;
 		}

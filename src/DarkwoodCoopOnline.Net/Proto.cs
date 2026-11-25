@@ -23,11 +23,11 @@ public static class Proto
 	// Bump whenever the wire format or a game packet changes: older and newer games refuse each other.
 	public const ushort Version = 1;
 
-	public const int DefaultPort = 27115;      // TCP, the host's relay server (and up to +7: the invite code carries which)
+	public const int DefaultPort = 27115;      // TCP, the host's relay server (and up to +6: the invite code carries which)
 
 	public const int DiscoveryPort = 27116;    // UDP, finding games on the local network
 
-	public const int PortTries = 8;
+	public const int PortTries = 7;   // (the invite code's 8th value means "through Steam")
 
 	public const int MaxPlayers = 4;
 

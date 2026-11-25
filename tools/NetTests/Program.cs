@@ -89,7 +89,7 @@ static class T
 	static int Main()
 	{
 		// invite codes: round trip, typo tolerance, checksum
-		foreach (var (ip, cport) in new[] { (0x5DB8D822u, 27115), (0x01020304u, 27122), (0xC0A80001u, 27118) })
+		foreach (var (ip, cport) in new[] { (0x5DB8D822u, 27115), (0x01020304u, 27121), (0xC0A80001u, 27118) })
 		{
 			var code = InviteCode.Make(ip, cport);
 			Check(InviteCode.TryParse(code, out var ip2, out var p2) && ip2 == ip && p2 == cport, $"invite code {code} round trip ({InviteCode.IpToString(ip)}:{cport})");
@@ -97,6 +97,9 @@ static class T
 			var bad = code.Substring(0, 8) + (code[8] == 'Z' ? 'Y' : 'Z');
 			Check(!InviteCode.TryParse(bad, out _, out _), $"invite code {bad} rejected (checksum)");
 		}
+		var sc = InviteCode.MakeSteam(76561198012345678UL);
+		Check(InviteCode.TryParseSteam(sc, out var sid) && sid == 76561198012345678UL && !InviteCode.TryParse(sc, out _, out _) && !InviteCode.TryResolve(sc, out _, out _), $"Steam invite code {sc} round trip, not taken for an address");
+		Check(!InviteCode.TryParseSteam(InviteCode.Make(0x5DB8D822u, 27121), out _), "address code (last port) isn't taken for a Steam code");
 		Check(InviteCode.TryResolve("26.1.2.3", out var h, out var pp) && h == "26.1.2.3" && pp == Proto.DefaultPort, "resolve plain IP");
 		Check(InviteCode.TryResolve("myhost.example:30000", out h, out pp) && h == "myhost.example" && pp == 30000, "resolve host:port");
 

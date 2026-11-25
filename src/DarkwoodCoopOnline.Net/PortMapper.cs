@@ -262,7 +262,7 @@ public static class PortMapper
 		try
 		{
 			int count;
-			while ((count = stream.Read(array2, 0, array2.Length)) > 0 && memoryStream.Length < 65536)
+			while ((count = stream.Read(array2, 0, array2.Length)) > 0 && memoryStream.Length < 1048576)
 			{
 				memoryStream.Write(array2, 0, count);
 			}
@@ -502,6 +502,13 @@ public static class PortMapper
 		}
 		catch
 		{
+		}
+		// (Mono can't always list gateways) the usual home router: our LAN address with .1 at the end
+		string text = LanAddress();
+		if (text != null && InviteCode.TryParseIpv4(text, out var ip))
+		{
+			gw = (ip & 0xFFFFFF00u) | 1u;
+			return true;
 		}
 		return false;
 	}

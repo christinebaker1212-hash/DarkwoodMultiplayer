@@ -28,7 +28,14 @@ public static class HostFlow
 	}
 
 	// One line for the lobby / status: how friends get in
-	public static string InviteLine
+	private static float _hostingSince;
+
+	private static string _announcedCode = "";
+
+	// The code friends type in JOIN. Like Moemon Kai Co-op: the router is opened and the code carries the
+	// home's address. If the router can't be opened, the code carries the host's Steam account instead
+	// and friends connect through Steam's relay - it works behind any router, nothing to set up.
+	public static string Code
 	{
 		get
 		{
@@ -38,23 +45,89 @@ public static class HostFlow
 			}
 			if (PortMapper.Status == PortMapper.State.Open && !string.IsNullOrEmpty(PortMapper.Code))
 			{
-				return "Invite code: " + PortMapper.Code;
+				return PortMapper.Code;
+			}
+			bool flag = PortMapper.Status == PortMapper.State.Failed || PortMapper.Status == PortMapper.State.Idle || Time.unscaledTime - _hostingSince > 15f;
+			if (flag && SteamCode != null)
+			{
+				return SteamCode;
+			}
+			return "";
+		}
+	}
+
+	public static bool CodeIsSteam
+	{
+		get
+		{
+			string code = Code;
+			if (code.Length > 0)
+			{
+				return code == SteamCode;
+			}
+			return false;
+		}
+	}
+
+	private static string _steamCode;
+
+	// The Steam code as a spare when the main code is the router one (e.g. Windows Firewall blocks it)
+	public static string BackupSteamCode
+	{
+		get
+		{
+			if (!Hosting || CodeIsSteam)
+			{
+				return null;
+			}
+			return SteamCode;
+		}
+	}
+
+	private static string SteamCode
+	{
+		get
+		{
+			if (_steamCode == null && SteamAvailability.Available && SteamCarrier.Started)
+			{
+				try
+				{
+					_steamCode = InviteCode.MakeSteam(SteamCarrier.MyId());
+				}
+				catch
+				{
+					_steamCode = null;
+				}
+			}
+			return _steamCode;
+		}
+	}
+
+	// One line for the lobby / status: how friends get in
+	public static string InviteLine
+	{
+		get
+		{
+			if (!Hosting)
+			{
+				return "";
+			}
+			string code = Code;
+			if (code.Length > 0)
+			{
+				return "Invite code: " + code;
 			}
 			if (PortMapper.Status == PortMapper.State.Working)
 			{
-				return "Opening your router for an invite code...";
+				return "Making your invite code...";
 			}
+			// no router and no Steam (a non-Steam copy of the game): addresses friends can still use
 			RefreshAddresses();
-			if (_vpnAddress != null)
+			if (_lanAddress != null)
 			{
-				return _vpnName + " address: " + _vpnAddress + PortSuffix();
+				return "Same network: " + _lanAddress + PortSuffix() + ((_vpnAddress != null) ? ("  ·  " + _vpnName + ": " + _vpnAddress + PortSuffix()) : "");
 			}
-			string text = _lanAddress;
-			if (text != null)
-			{
-				return "Same network: " + text + PortSuffix() + (SteamAvailability.Available ? "  ·  Steam friends: JOIN > your name" : "");
-			}
-			return SteamAvailability.Available ? "Steam friends: JOIN > your name" : "";
+			return (_vpnAddress != null) ? (_vpnName + ": " + _vpnAddress + PortSuffix()) : "";
 		}
 	}
 
@@ -125,6 +198,8 @@ public static class HostFlow
 		}
 		_lastPortState = PortMapper.State.Idle;
 		_toldVpn = false;
+		_hostingSince = Time.unscaledTime;
+		_announcedCode = "";
 		if (CoopConfig.OpenRouter.Value)
 		{
 			PortMapper.Open(relayServer.Port);
@@ -182,39 +257,32 @@ public static class HostFlow
 		{
 			server.HostStatus = (Player.Instance.firstPlay ? Proto.HostStatus.Prologue : Proto.HostStatus.Chapter);
 		}
+		string code = Code;
+		if (code.Length > 0 && code != _announcedCode)
+		{
+			_announcedCode = code;
+			try
+			{
+				GUIUtility.systemCopyBuffer = code;
+			}
+			catch
+			{
+			}
+			CoopNotice.Show("Invite code " + code + " copied - paste it to your friends!", 15f);
+			Plugin.Log.LogInfo("[Host] invite code " + code + (CodeIsSteam ? " (through Steam: the router couldn't be opened)" : (" (router opened, " + PortMapper.PublicAddress + ":" + PortMapper.ExternalPort + ")")));
+		}
 		PortMapper.State status = PortMapper.Status;
 		if (status == _lastPortState)
 		{
 			return;
 		}
 		_lastPortState = status;
-		switch (status)
+		if (status == PortMapper.State.Failed && SteamCode == null && !_toldVpn)
 		{
-		case PortMapper.State.Open:
-			try
-			{
-				GUIUtility.systemCopyBuffer = PortMapper.Code;
-			}
-			catch
-			{
-			}
-			CoopNotice.Show("Invite code " + PortMapper.Code + " copied - paste it to your friends!", 15f);
-			break;
-		case PortMapper.State.Failed:
-		{
-			string text = ((PortMapper.LastError == PortMapper.Error.Cgnat) ? "Your internet provider shares your address (CGNAT), so there's no invite code." : ((PortMapper.LastError == PortMapper.Error.Refused) ? "Your router refused to open the port (UPnP off?), so there's no invite code." : "No router answered (UPnP off?), so there's no invite code."));
-			if (PortMapper.FindVpnAddress(out var address, out var name) && !_toldVpn)
-			{
-				_toldVpn = true;
-				text = text + " Friends on " + name + " can join with " + address + PortSuffix() + ".";
-			}
-			else
-			{
-				text += (SteamAvailability.Available ? " Steam friends can still join (JOIN > your name), or use Radmin VPN." : " Friends can use Radmin VPN (see the README).");
-			}
-			CoopNotice.Show(text, 20f);
-			break;
-		}
+			// only for copies of the game without Steam: Steam players always get a working code
+			_toldVpn = true;
+			string text = ((PortMapper.LastError == PortMapper.Error.Cgnat) ? "Your internet provider shares your address (CGNAT)" : "Your router didn't open the port (UPnP off?)");
+			CoopNotice.Show(text + ", so friends outside your home can't reach you without Steam. Friends at home: JOIN > Games on your network.", 20f);
 		}
 	}
 

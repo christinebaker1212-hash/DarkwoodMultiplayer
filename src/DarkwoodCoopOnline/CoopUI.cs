@@ -303,7 +303,7 @@ public static class CoopUI
 			JoinFlow.JoinAddress(_code);
 		}
 		GUILayout.EndHorizontal();
-		GUILayout.Label("A code like K7QM-3XPA from your friend, their IP (Radmin VPN: 26.x.x.x), or ip:port.", _small, Array.Empty<GUILayoutOption>());
+		GUILayout.Label("The code your friend got when they started hosting (like K7QM-3XPA). An IP address or ip:port works too.", _small, Array.Empty<GUILayoutOption>());
 		GUILayout.Space(8f);
 		GUILayout.Label("GAMES ON YOUR NETWORK", _title, Array.Empty<GUILayoutOption>());
 		List<LanSearch.Game> games = LanSearch.Games;

@@ -7,7 +7,7 @@ relay server, friends join with an **invite code**, and the whole thing is tuned
 
 ## Install
 
-1. Download `DarkwoodCoopOnline-4P-v0.4.0.zip` (in [`release/`](release/)).
+1. Download `DarkwoodCoopOnline-4P-v0.4.1.zip` (in [`release/`](release/)).
 2. Unzip it **into the Darkwood game folder** (the one with `Darkwood.exe`), so that `winhttp.dll`,
    `doorstop_config.ini` and the `BepInEx` folder sit next to `Darkwood.exe`.
    If you had the old 2-player mod, just let it overwrite.
@@ -19,7 +19,7 @@ On the main menu there are two new entries:
 
 | | |
 |---|---|
-| **HOST A GAME** | Type your name, a server name and (optionally) a password and a welcome note, then **START HOSTING** and pick the save to play. When the world is loaded the game opens your router by itself and shows an **invite code** like `K7QM-3XPA` — it's copied, just paste it to your friends. Press **F** to start once at least one friend is in; more friends can still join later. |
+| **HOST A GAME** | Type your name, a server name and (optionally) a password and a welcome note, then **START HOSTING** and pick the save to play. When the world is loaded the game shows an **invite code** like `K7QM-3XPA` — it's copied, just paste it to your friends. No router setup, no Radmin. Press **F** to start once at least one friend is in; more friends can still join later. |
 | **JOIN A GAME** | **REJOIN &lt;last game&gt;** (no typing), **ENTER INVITE CODE OR IP**, games on your home network (listed automatically) and Steam friends who are hosting. The host's world is downloaded straight from them, you pick a save slot for it the first time, and you're in. |
 
 * Up to **4 players**. Friends can join or leave at any time; the host keeps playing.
@@ -31,24 +31,27 @@ On the main menu there are two new entries:
 * Proximity voice chat works per player (turn it on in the config / voice settings).
 * Steam: friends can also use **Join game** from the Steam friends list.
 
-### When the invite code doesn't work
+### How the invite code reaches you (no Radmin needed)
 
-The game asks your router to forward the port (UPnP / NAT-PMP), like Moemon Kai Co-op does.
+Like Moemon Kai Co-op, the host's game asks the router to forward its port (UPnP / NAT-PMP) and the
+code carries the home's address. **If the router can't be opened** (UPnP off, CGNAT, double NAT), the
+code is made **through Steam** instead: it looks the same, friends type it the same way, and the game
+connects through Steam's relay, which works behind any router with nothing to set up. You never need
+Radmin, Hamachi or port forwarding with the Steam version of Darkwood.
 
-* **No invite code** (router has UPnP off, or your provider uses CGNAT): use **Radmin VPN** (free). Host and
-  friends install it, the host creates a network, friends join it, then friends type the host's
-  Radmin address (`26.x.x.x`, shown in the co-op window) in JOIN. Hamachi (`25.x.x.x`) works too.
-  Steam friends can always join through Steam, no ports needed.
-* **Windows Firewall** is the usual culprit: the first time you host, allow Darkwood on both
-  *Private* and *Public* networks (Windows Security → Firewall → Allow an app through firewall).
-* Port used: TCP **27115** (27115–27122 if busy); LAN discovery: UDP 27116.
+* The co-op window (**0**) also offers the Steam code as a spare when the main code is the router one
+  (useful if Windows Firewall blocks it).
+* Windows may ask whether Darkwood can use the network the first time you host: click **Allow**.
+* Copies of Darkwood without Steam (GOG) can only use the router code, the LAN list or a VPN address.
+* Ports: TCP **27115** (27115–27121 if busy); LAN discovery: UDP 27116.
 
 ## What changed compared to the 2-player mod
 
 **4 players (Moemon-style networking)**
 * Lobby + relay server inside the host's game (server-assigned slots 0–3), password-protected rooms
   (only a SHA-256 key of name + password is sent), invite codes, router port mapping, LAN discovery,
-  REJOIN, Radmin/Hamachi fallback, Steam P2P on the same protocol.
+  REJOIN, and Steam P2P on the same protocol — invite codes fall back to Steam automatically when the
+  router can't be opened.
 * The host's save is sent over the game connection. The old version uploaded the host's save to a
   public file-sharing website for Steam joins and needed admin rights (HttpListener) for LAN joins; both are gone.
 * Every player has their own puppet, name tag, voice channel and downed state; damage, revives,

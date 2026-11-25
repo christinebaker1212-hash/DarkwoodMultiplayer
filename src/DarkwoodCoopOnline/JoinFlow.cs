@@ -154,6 +154,18 @@ public static class JoinFlow
 		{
 			return;
 		}
+		// a code made through Steam (the host's router couldn't be opened): connect over Steam
+		if (InviteCode.TryParseSteam(input, out var steamId))
+		{
+			if (!SteamAvailability.Available)
+			{
+				Fail("That invite code connects through Steam - start Darkwood from Steam to use it.");
+				return;
+			}
+			JoinSteam(steamId, "your friend (Steam)", rememberedKey, rememberedRoom);
+			_address = input.Trim();
+			return;
+		}
 		if (!InviteCode.TryResolve(input, out var host, out var port))
 		{
 			Fail("That's not an invite code or an address.");
@@ -329,7 +341,7 @@ public static class JoinFlow
 			}
 			if (_connectedLink == null)
 			{
-				Fail("Couldn't reach " + Target + " (" + _connectError + "). Check the code, and that the host's game is running and hosting.");
+				Fail("Couldn't reach " + Target + " (" + _connectError + "). Check the code and that your friend is still hosting. If it still fails, ask them for their Steam invite code (co-op window, key 0 on their side).");
 				return;
 			}
 			_pendingClient.Attach(_connectedLink);
@@ -451,7 +463,7 @@ public static class JoinFlow
 		if (_steamHost != 0)
 		{
 			CoopConfig.LastSteamHost.Value = _steamHost.ToString();
-			CoopConfig.LastAddress.Value = "";
+			CoopConfig.LastAddress.Value = _address;
 		}
 		else
 		{

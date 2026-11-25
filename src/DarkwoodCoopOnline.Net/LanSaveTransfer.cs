@@ -56,8 +56,18 @@ public static class LanSaveTransfer
 	// The host's world has really finished loading (WorldGenerator.activatePlayer ran)
 	public static bool HostWorldReady => _hostWorldReady;
 
+	// a joined world is waiting for its slot or loading
+	public static bool JoinInProgress => _pendingConnect;
+
+	private static float _activatedAt = float.MinValue;
+
 	public static void MarkHostWorldNotReady()
 	{
+		// activatePlayer already ran during this very load (it can come just before worldGenFinished)
+		if (Time.unscaledTime - _activatedAt < 15f)
+		{
+			return;
+		}
 		_hostWorldReady = false;
 	}
 
@@ -124,6 +134,7 @@ public static class LanSaveTransfer
 	private static void AfterActivatePlayer()
 	{
 		_hostWorldReady = true;
+		_activatedAt = Time.unscaledTime;
 		Plugin.Log.LogInfo("[LanSaveTransfer] WorldGenerator.activatePlayer() disparou - mundo/prólogo do host realmente prontos agora (/save pode servir).");
 		LobbySync.MarkLocalIntroDone();
 	}

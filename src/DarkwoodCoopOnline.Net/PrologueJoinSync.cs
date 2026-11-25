@@ -45,6 +45,8 @@ public static class PrologueJoinSync
 
 	private static float _pendingConnectTimer;
 
+	public static bool JoinInProgress => _pendingConnect;
+
 	public static void EnsurePatched()
 	{
 		if (!_patched)

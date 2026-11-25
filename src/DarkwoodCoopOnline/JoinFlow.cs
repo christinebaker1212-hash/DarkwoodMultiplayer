@@ -394,6 +394,7 @@ public static class JoinFlow
 			{
 				Plugin.Log.LogInfo("[Join] the host is in the prologue - starting a new game here, in step with them.");
 				Current = Step.Loading;
+				_timer = 0f;
 				PrologueJoinSync.ChooseSlotForNewGame();
 			}
 			else if (_conn.HostStatus == Proto.HostStatus.Chapter)
@@ -417,6 +418,11 @@ public static class JoinFlow
 			if (LanSaveTransfer.IsFailed)
 			{
 				Fail(LanSaveTransfer.StatusText);
+			}
+			else if (_timer > 1f && !SaveSlotPickerUI.Active && !CoopMenuList.Active && !LanSaveTransfer.JoinInProgress && !PrologueJoinSync.JoinInProgress && Core.mainMenu)
+			{
+				// backed out of the save-slot list
+				Cancel();
 			}
 			else if (_timer > 240f)
 			{
@@ -463,6 +469,7 @@ public static class JoinFlow
 		}
 		Plugin.Log.LogInfo($"[Join] got the host's world ({payload.Length} bytes) - writing and loading.");
 		Current = Step.Loading;
+		_timer = 0f;
 		LanSaveTransfer.ApplyAndLoadForJoin(blob, text);
 	}
 

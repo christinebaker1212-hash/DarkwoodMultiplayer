@@ -68,7 +68,9 @@ public static class HostFlow
 	}
 
 	// Called when the host's world has loaded (after picking a save from HOST A GAME)
-	public static bool StartHosting()
+	// worldJustLoaded: called right as the world finished loading (its last step, WorldGenerator.activatePlayer,
+	// may still be ahead; saves are served once it ran). From F7 mid-game the world is long ready.
+	public static bool StartHosting(bool worldJustLoaded = false)
 	{
 		if (CoopConnection.Current != null)
 		{
@@ -106,7 +108,10 @@ public static class HostFlow
 		{
 			PortMapper.Open(relayServer.Port);
 		}
-		LanSaveTransfer.MarkHostWorldNotReady();
+		if (worldJustLoaded)
+		{
+			LanSaveTransfer.MarkHostWorldNotReady();
+		}
 		CoopSession session = new CoopSession(coopConnection, NetRole.Host);
 		Plugin.Instance.AdoptSession(session);
 		LobbySync.Begin(isHost: true);

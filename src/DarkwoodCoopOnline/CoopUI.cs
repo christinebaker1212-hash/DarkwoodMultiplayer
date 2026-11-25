@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DarkwoodCoopOnline.Net;
 using DarkwoodCoopOnline.Sync;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DarkwoodCoopOnline;
 
@@ -75,8 +76,39 @@ public static class CoopUI
 		return val2;
 	}
 
+	// The game's own main menu reacts to clicks under our window: hide it while a co-op screen is open
+	private static GameObject _hiddenMenu;
+
+	private static void HideNativeMenu()
+	{
+		try
+		{
+			MainMenu instance = Singleton<MainMenu>.Instance;
+			if ((Object)(object)instance != (Object)null && (Object)(object)instance.Menu0 != (Object)null && instance.Menu0.activeSelf)
+			{
+				instance.Menu0.SetActive(false);
+				_hiddenMenu = instance.Menu0;
+			}
+		}
+		catch (Exception ex)
+		{
+			Plugin.Log.LogWarning("[CoopUI] couldn't hide the main menu: " + ex.Message);
+		}
+	}
+
+	private static void RestoreNativeMenu()
+	{
+		GameObject hiddenMenu = _hiddenMenu;
+		_hiddenMenu = null;
+		if ((Object)(object)hiddenMenu != (Object)null && Core.mainMenu)
+		{
+			hiddenMenu.SetActive(true);
+		}
+	}
+
 	public static void OpenHost()
 	{
+		HideNativeMenu();
 		_name = CoopConfig.MyName();
 		_room = CoopConfig.DefaultRoomName();
 		_password = CoopConfig.RoomPassword.Value;
@@ -87,6 +119,7 @@ public static class CoopUI
 
 	public static void OpenJoin()
 	{
+		HideNativeMenu();
 		_name = CoopConfig.MyName();
 		_code = CoopConfig.LastAddress.Value;
 		_joinPassword = "";
@@ -99,6 +132,7 @@ public static class CoopUI
 	{
 		_panel = Panel.None;
 		LanSearch.Stop();
+		RestoreNativeMenu();
 	}
 
 	private static void SaveName()
@@ -146,6 +180,18 @@ public static class CoopUI
 
 	public static void Tick()
 	{
+		// left the main menu: the screens are done (nothing to restore)
+		if (_panel != Panel.None && !Core.mainMenu)
+		{
+			_panel = Panel.None;
+			_hiddenMenu = null;
+			LanSearch.Stop();
+		}
+		// joining reached the save-slot choice / loading: that list lives in the native menu, show it again
+		if ((Object)(object)_hiddenMenu != (Object)null && (JoinFlow.Current == JoinFlow.Step.Loading || SaveSlotPickerUI.Active || CoopMenuList.Active))
+		{
+			Close();
+		}
 		if (_panel != Panel.None && Input.GetKeyDown((KeyCode)27))
 		{
 			Close();
@@ -167,6 +213,10 @@ public static class CoopUI
 	public static void Draw()
 	{
 		EnsureStyles();
+		if (JoinFlow.Current == JoinFlow.Step.Loading && (CoopMenuList.Active || SaveSlotPickerUI.Active))
+		{
+			return;
+		}
 		if (JoinFlow.Busy || JoinFlow.Current == JoinFlow.Step.Failed)
 		{
 			_rect = Centered(460f, 220f);

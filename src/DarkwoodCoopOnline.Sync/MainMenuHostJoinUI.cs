@@ -27,7 +27,7 @@ public static class MainMenuHostJoinUI
 			{
 				_pendingHost = false;
 				Plugin.Log.LogInfo("[MainMenuHostJoinUI] world loaded - starting to host.");
-				HostFlow.StartHosting();
+				HostFlow.StartHosting(worldJustLoaded: true);
 			}
 		}
 	}

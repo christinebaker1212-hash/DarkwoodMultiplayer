@@ -19,8 +19,6 @@ public static class TrapDiagnostics
 
 	public static void Capture()
 	{
-		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
 		Player instance = Player.Instance;
 		if ((Object)(object)instance == (Object)null)
 		{
@@ -67,12 +65,6 @@ public static class TrapDiagnostics
 
 	private static void DumpItemFields(Item it)
 	{
-		//IL_0132: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0137: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0155: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0162: Unknown result type (might be due to invalid IL or missing references)
 		Plugin.Log.LogInfo("[TrapDiag] --- campos do Item ---");
 		Plugin.Log.LogInfo($"[TrapDiag]   disabled={it.disabled} destroyed={it.destroyed} isSelectable={it.isSelectable} " + $"health={it.health}/{it.maxHealth} draggable={it.draggable}");
 		Plugin.Log.LogInfo($"[TrapDiag]   doesNotNeedItemToDisarm={it.doesNotNeedItemToDisarm} disarmChance={it.disarmChance:F2} " + string.Format("disarmTime={0:F2} transformDisarmingMe={1}", it.disarmTime, ((Object)(object)it.transformDisarmingMe != (Object)null) ? ((Object)it.transformDisarmingMe).name : "null"));
@@ -99,8 +91,6 @@ public static class TrapDiagnostics
 
 	private static void DumpHierarchy(Transform tr, int depth)
 	{
-		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c0: Expected O, but got Unknown
 		List<string> list = new List<string>();
 		Component[] components = ((Component)tr).GetComponents<Component>();
 		foreach (Component val in components)
@@ -139,8 +129,6 @@ public static class TrapDiagnostics
 
 	public static void Tick()
 	{
-		//IL_00f6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fb: Unknown result type (might be due to invalid IL or missing references)
 		if (_streaming && !((Object)(object)_item == (Object)null) && !((Object)(object)_trigger == (Object)null) && !(Time.time - _lastLog < 0.125f))
 		{
 			_lastLog = Time.time;

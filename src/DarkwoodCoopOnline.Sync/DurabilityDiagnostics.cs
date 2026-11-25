@@ -25,22 +25,6 @@ public static class DurabilityDiagnostics
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Expected O, but got Unknown
-		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0063: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0070: Expected O, but got Unknown
-		//IL_0070: Expected O, but got Unknown
-		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ec: Expected O, but got Unknown
-		//IL_0126: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0148: Expected O, but got Unknown
-		//IL_0148: Expected O, but got Unknown
-		//IL_0190: Unknown result type (might be due to invalid IL or missing references)
-		//IL_019d: Expected O, but got Unknown
-		//IL_01f2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01ff: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;

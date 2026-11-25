@@ -21,13 +21,6 @@ public static class ChestDiagnostics
 
 	public static void Capture()
 	{
-		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_016e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_019e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00dc: Unknown result type (might be due to invalid IL or missing references)
 		Player instance = Player.Instance;
 		if ((Object)(object)instance == (Object)null)
 		{

@@ -23,14 +23,6 @@ public static class DebugCheatKeys
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Expected O, but got Unknown
-		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005c: Expected O, but got Unknown
-		//IL_00ff: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010d: Expected O, but got Unknown
-		//IL_01b0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01be: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -98,7 +90,6 @@ public static class DebugCheatKeys
 
 	private static void TeleportPeerToMeOnce()
 	{
-		//IL_003a: Unknown result type (might be due to invalid IL or missing references)
 		if (!CoopRuntime.SessionActive || (Object)(object)Player.Instance == (Object)null)
 		{
 			Plugin.Log.LogInfo("[DebugCheatKeys] sem sessão/jogador local - ignorado.");

@@ -57,14 +57,6 @@ public static class DreamSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Expected O, but got Unknown
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0069: Expected O, but got Unknown
-		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b3: Expected O, but got Unknown
-		//IL_00b3: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;

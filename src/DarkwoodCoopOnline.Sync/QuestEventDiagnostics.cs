@@ -13,12 +13,6 @@ public static class QuestEventDiagnostics
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0049: Expected O, but got Unknown
-		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007e: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -30,57 +24,6 @@ public static class QuestEventDiagnostics
 
 	private static string Categoria(GameEvent.Type t)
 	{
-		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0006: Invalid comparison between Unknown and I4
-		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Invalid comparison between Unknown and I4
-		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0011: Invalid comparison between Unknown and I4
-		//IL_00c1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c7: Invalid comparison between Unknown and I4
-		//IL_0095: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009b: Invalid comparison between Unknown and I4
-		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004d: Invalid comparison between Unknown and I4
-		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Invalid comparison between Unknown and I4
-		//IL_00db: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e1: Invalid comparison between Unknown and I4
-		//IL_00c9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cf: Invalid comparison between Unknown and I4
-		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b5: Invalid comparison between Unknown and I4
-		//IL_009d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a3: Invalid comparison between Unknown and I4
-		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0070: Invalid comparison between Unknown and I4
-		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0055: Invalid comparison between Unknown and I4
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0032: Invalid comparison between Unknown and I4
-		//IL_0017: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0019: Invalid comparison between Unknown and I4
-		//IL_00e3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e9: Invalid comparison between Unknown and I4
-		//IL_00d1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d7: Invalid comparison between Unknown and I4
-		//IL_00b7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bd: Invalid comparison between Unknown and I4
-		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ab: Invalid comparison between Unknown and I4
-		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007b: Invalid comparison between Unknown and I4
-		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0060: Invalid comparison between Unknown and I4
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003d: Invalid comparison between Unknown and I4
-		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0022: Invalid comparison between Unknown and I4
-		//IL_00eb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f1: Invalid comparison between Unknown and I4
-		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0086: Invalid comparison between Unknown and I4
 		if ((int)t <= 600)
 		{
 			if ((int)t <= 201)
@@ -172,15 +115,6 @@ public static class QuestEventDiagnostics
 
 	private static void AfterFire(GameEvent __instance, GameObject thisGO)
 	{
-		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008a: Invalid comparison between Unknown and I4
-		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b0: Invalid comparison between Unknown and I4
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_024e: Unknown result type (might be due to invalid IL or missing references)
 		if (__instance == null)
 		{
 			return;
@@ -241,8 +175,6 @@ public static class QuestEventDiagnostics
 
 	private static void AfterSpawn(GameEvent __instance, GameObject trueTarget, Character spawnedCharacter)
 	{
-		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)spawnedCharacter == (Object)null))
 		{
 			string text = (((Object)(object)trueTarget != (Object)null) ? ((Object)trueTarget).name : "?");

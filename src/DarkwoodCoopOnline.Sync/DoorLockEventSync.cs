@@ -22,9 +22,6 @@ public static class DoorLockEventSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005a: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -34,13 +31,6 @@ public static class DoorLockEventSync
 
 	private static void Postfix(Door __instance, string keyType)
 	{
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0134: Unknown result type (might be due to invalid IL or missing references)
 		if (_applyingRemote || !CoopRuntime.SessionActive || (Object)(object)__instance == (Object)null)
 		{
 			return;
@@ -71,11 +61,6 @@ public static class DoorLockEventSync
 
 	public static void ApplyLockEvent(PacketReader r)
 	{
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0068: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006d: Unknown result type (might be due to invalid IL or missing references)
 		string text = r.Str();
 		Vector3 val = r.Vec3();
 		string text2 = r.Str();
@@ -108,10 +93,6 @@ public static class DoorLockEventSync
 
 	public static void ApplyPullToPosition(PacketReader r)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
 		Vector3 val = r.Vec3();
 		Player instance = Player.Instance;
 		if (!((Object)(object)instance == (Object)null))
@@ -124,8 +105,6 @@ public static class DoorLockEventSync
 
 	private static string KeyOf(string name, Vector3 p)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0016: Unknown result type (might be due to invalid IL or missing references)
 		return $"{name}@{Mathf.RoundToInt(p.x)}_{Mathf.RoundToInt(p.z)}";
 	}
 

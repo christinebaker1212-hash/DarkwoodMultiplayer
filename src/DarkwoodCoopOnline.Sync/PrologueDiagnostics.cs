@@ -12,18 +12,6 @@ public static class PrologueDiagnostics
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Expected O, but got Unknown
-		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005c: Expected O, but got Unknown
-		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0092: Expected O, but got Unknown
-		//IL_00bb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c8: Expected O, but got Unknown
-		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fe: Expected O, but got Unknown
-		//IL_0138: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0146: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -39,8 +27,6 @@ public static class PrologueDiagnostics
 
 	private static void BeforeGameEventFire(GameEvent __instance, GameObject thisGO)
 	{
-		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
 		if (__instance != null)
 		{
 			Plugin.Log.LogInfo($"[PrologueDiag][GameEvent] type={__instance.type} eventType={__instance.eventType} " + $"customName='{__instance.customName}' delay={__instance.delay:F2} amount={__instance.amount} " + "stringValue='" + __instance.stringValue + "' Value='" + __instance.Value + "' Value2='" + __instance.Value2 + "' " + $"floatValue={__instance.floatValue:F2} intValue={__instance.intValue} " + string.Format("alvoGO='{0}' tempo={1:F1}", ((Object)(object)thisGO != (Object)null) ? ((Object)thisGO).name : "(null)", Time.time));

@@ -12,12 +12,6 @@ public static class NpcDeathDiagnostics
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Expected O, but got Unknown
-		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00db: Expected O, but got Unknown
-		//IL_00db: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -45,9 +39,6 @@ public static class NpcDeathDiagnostics
 
 	private static void Postfix(Character __instance, bool __state, Transform attackerTransform, bool byPlayer, bool force)
 	{
-		//IL_00d7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01cf: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e4: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)__instance == (Object)null || !__state || ((CharBase)__instance).alive || (Object)(object)__instance.npc == (Object)null)
 		{
 			return;

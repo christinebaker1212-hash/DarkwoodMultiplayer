@@ -17,9 +17,6 @@ public static class PrologueEncounterPullSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0046: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -39,9 +36,6 @@ public static class PrologueEncounterPullSync
 
 	private static void AfterSetForbidInputs(bool value)
 	{
-		//IL_0061: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b2: Unknown result type (might be due to invalid IL or missing references)
 		bool num = value && !_wasForbidding;
 		_wasForbidding = value;
 		if (!num || !CoopRuntime.SessionActive || !InPrologue())

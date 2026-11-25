@@ -110,7 +110,11 @@ public static class DownedSync
 
 	private static float _downedTimer;
 
-	private static bool _peerDowned;
+	// slot -> downed
+	private static readonly Dictionary<int, bool> _peerDowned = new Dictionary<int, bool>();
+
+	// the puppet that currently carries the native "Revive" prompt
+	private static RemotePlayerPuppet _promptPuppet;
 
 	private static bool _forceRealDeath;
 
@@ -164,13 +168,62 @@ public static class DownedSync
 
 	public static bool Downed => _downed;
 
-	public static bool PeerDowned => _peerDowned;
+	// any other player down?
+	public static bool PeerDowned
+	{
+		get
+		{
+			foreach (KeyValuePair<int, bool> item in _peerDowned)
+			{
+				if (item.Value)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+	}
+
+	public static bool IsPeerDowned(int slot)
+	{
+		if (_peerDowned.TryGetValue(slot, out var value))
+		{
+			return value;
+		}
+		return false;
+	}
+
+	public static bool IsPeerReallyDead(int slot)
+	{
+		return _peerReallyDead;
+	}
+
+	// Someone still standing who could come and revive me?
+	private static bool AnyoneCanRevive()
+	{
+		foreach (RemotePlayerPuppet puppet in CoopPeers.Puppets)
+		{
+			if ((Object)(object)puppet != (Object)null && puppet.HasState && !IsPeerDowned(puppet.Slot))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static void OnPeerLeft(int slot)
+	{
+		_peerDowned.Remove(slot);
+		if ((Object)(object)_promptPuppet != (Object)null && _promptPuppet.Slot == slot)
+		{
+			_promptPuppet = null;
+			_cursorPromptAttached = false;
+		}
+		// the one who could revive me left and nobody else can: bleed out normally (Tick handles it)
+	}
 
 	private static string GetLocalizedReviveText()
 	{
-		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0016: Unknown result type (might be due to invalid IL or missing references)
 		LanguageCode key;
 		try
 		{
@@ -209,6 +262,10 @@ public static class DownedSync
 
 	private static void EnsureRevivePrompt(RemotePlayerPuppet peerPuppet)
 	{
+		if (_cursorPromptAttached && (Object)(object)_promptPuppet != (Object)(object)peerPuppet)
+		{
+			ClearRevivePrompt(_promptPuppet);
+		}
 		if (!_cursorPromptAttached && !((Object)(object)peerPuppet == (Object)null))
 		{
 			CustomCursorAction val = ((Component)peerPuppet).GetComponent<CustomCursorAction>();
@@ -223,6 +280,7 @@ public static class DownedSync
 				((Component)peerPuppet).gameObject.AddComponent<Selectable>();
 			}
 			_cursorPromptAttached = true;
+			_promptPuppet = peerPuppet;
 			Plugin.Log.LogInfo("[Downed] prompt nativo (CustomCursorAction+Selectable) anexado no boneco do peer.");
 			LogSelectionDiagnostics(peerPuppet);
 		}
@@ -262,6 +320,8 @@ public static class DownedSync
 			return;
 		}
 		_cursorPromptAttached = false;
+		peerPuppet = _promptPuppet ?? peerPuppet;
+		_promptPuppet = null;
 		if (!((Object)(object)peerPuppet == (Object)null))
 		{
 			CustomCursorAction component = ((Component)peerPuppet).GetComponent<CustomCursorAction>();
@@ -291,9 +351,6 @@ public static class DownedSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0048: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -307,10 +364,20 @@ public static class DownedSync
 		{
 			return true;
 		}
-		if (!CoopRuntime.PeerConnected)
+		if (!CoopRuntime.PeerConnected || CoopPeers.Count == 0)
 		{
-			CoopRuntime.Session?.Puppet?.SetReallyDead();
+			StartWatchingRealDeath(__instance);
+			return true;
+		}
+		if (!AnyoneCanRevive())
+		{
+			Plugin.Log.LogInfo("[Downed] everyone else is down too - nobody left to revive: party wipe.");
 			_peerReallyDead = true;
+			foreach (RemotePlayerPuppet puppet in CoopPeers.Puppets)
+			{
+				puppet?.SetReallyDead();
+			}
+			CoopRuntime.Session?.SendReliable(PacketWriter.Begin(PacketType.ForceDeath).Finish());
 			StartWatchingRealDeath(__instance);
 			return true;
 		}
@@ -374,12 +441,8 @@ public static class DownedSync
 		DumpState(p, "die() chamado — estado JUSTO ANTES de p.die()");
 	}
 
-	public static void Tick(float dt, RemotePlayerPuppet peerPuppet)
+	public static void Tick(float dt)
 	{
-		//IL_02d0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02db: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0108: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013f: Unknown result type (might be due to invalid IL or missing references)
 		Player instance = Player.Instance;
 		if ((Object)(object)instance == (Object)null)
 		{
@@ -452,7 +515,8 @@ public static class DownedSync
 			}
 			return;
 		}
-		if (!_peerDowned || (Object)(object)peerPuppet == (Object)null)
+		RemotePlayerPuppet peerPuppet = CoopPeers.Nearest(((Component)instance).transform.position, (RemotePlayerPuppet pp) => IsPeerDowned(pp.Slot));
+		if ((Object)(object)peerPuppet == (Object)null)
 		{
 			_reviveHoldTimer = 0f;
 			_holdingRevive = false;
@@ -490,8 +554,9 @@ public static class DownedSync
 				_reviveHoldTimer = 0f;
 				_holdingRevive = false;
 				EndReviveImmersion(instance);
-				Plugin.Log.LogInfo("[Downed] reanimei o peer.");
-				CoopRuntime.Session?.SendReliable(PacketWriter.Begin(PacketType.Revive).Finish());
+				Plugin.Log.LogInfo($"[Downed] revived '{peerPuppet.PeerName}' (slot {peerPuppet.Slot}).");
+				CoopRuntime.Session?.SendTo(peerPuppet.Slot, PacketWriter.Begin(PacketType.Revive).Finish());
+				_peerDowned[peerPuppet.Slot] = false;
 			}
 		}
 		else
@@ -555,7 +620,10 @@ public static class DownedSync
 		_downedTimer = 0f;
 		((CharBase)p).invisible = false;
 		CoopRuntime.Session?.SendReliable(PacketWriter.Begin(PacketType.DownedState).Bool(v: false).Finish());
-		CoopRuntime.Session?.Puppet?.SetReallyDead();
+		foreach (RemotePlayerPuppet puppet in CoopPeers.Puppets)
+		{
+			puppet?.SetReallyDead();
+		}
 		_peerReallyDead = true;
 		CoopRuntime.Session?.SendReliable(PacketWriter.Begin(PacketType.ForceDeath).Finish());
 	}
@@ -587,19 +655,27 @@ public static class DownedSync
 		_downed = false;
 		_downedTimer = 0f;
 		((CharBase)instance).invisible = false;
-		CoopRuntime.Session?.Puppet?.SetReallyDead();
+		foreach (RemotePlayerPuppet puppet in CoopPeers.Puppets)
+		{
+			puppet?.SetReallyDead();
+		}
 		_peerReallyDead = true;
-		Plugin.Log.LogInfo("[Downed] peer morreu de vez — morrendo junto (wipe).");
+		_peerDowned.Clear();
+		Plugin.Log.LogInfo("[Downed] party wipe - dying with everyone.");
 	}
 
-	public static void ApplyDownedState(PacketReader r)
+	public static void ApplyDownedState(PacketReader r, int from)
 	{
 		bool flag = r.Bool();
-		if (flag != _peerDowned)
+		if (flag != IsPeerDowned(from))
 		{
-			Plugin.Log.LogInfo("[Downed] soube que o peer " + (flag ? "caiu" : "não está mais caído") + ".");
+			Plugin.Log.LogInfo($"[Downed] '{CoopPeers.NameOf(from)}' {(flag ? "is down" : "is back up")}.");
+			if (flag)
+			{
+				CoopNotice.Show(CoopPeers.NameOf(from) + " is down! Hold F next to them to revive");
+			}
 		}
-		_peerDowned = flag;
+		_peerDowned[from] = flag;
 	}
 
 	public static void ApplyRevive()
@@ -625,7 +701,8 @@ public static class DownedSync
 	{
 		_downed = false;
 		_downedTimer = 0f;
-		_peerDowned = false;
+		_peerDowned.Clear();
+		_promptPuppet = null;
 		_reviveHoldTimer = 0f;
 		_diagTimer = 0f;
 		_broadcastTimer = 0f;

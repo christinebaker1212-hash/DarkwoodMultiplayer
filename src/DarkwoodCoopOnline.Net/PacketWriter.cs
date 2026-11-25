@@ -66,8 +66,6 @@ public sealed class PacketWriter
 
 	public PacketWriter Vec2XZ(Vector3 p)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0017: Unknown result type (might be due to invalid IL or missing references)
 		_bw.Write(p.x);
 		_bw.Write(p.z);
 		return this;
@@ -75,9 +73,6 @@ public sealed class PacketWriter
 
 	public PacketWriter Vec3(Vector3 p)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0017: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
 		_bw.Write(p.x);
 		_bw.Write(p.y);
 		_bw.Write(p.z);
@@ -86,10 +81,6 @@ public sealed class PacketWriter
 
 	public PacketWriter Quat(Quaternion q)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0017: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
 		_bw.Write(q.x);
 		_bw.Write(q.y);
 		_bw.Write(q.z);

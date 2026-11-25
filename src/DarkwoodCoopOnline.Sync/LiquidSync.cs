@@ -21,14 +21,6 @@ public static class LiquidSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Expected O, but got Unknown
-		//IL_0083: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0090: Expected O, but got Unknown
-		//IL_00b8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00da: Expected O, but got Unknown
-		//IL_00da: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -47,8 +39,6 @@ public static class LiquidSync
 
 	private static void AddPrefabPostfix(string prefab, Vector3 position, GameObject __result)
 	{
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
 		if (_suppressNextAddPrefab)
 		{
 			_suppressNextAddPrefab = false;
@@ -62,11 +52,6 @@ public static class LiquidSync
 
 	public static void ApplyTrailCreate(PacketReader r)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0011: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
 		Vector3 val = r.Vec3();
 		Plugin.Log.LogInfo($"[LiquidSync] recriando rastro de gasolina do peer em pos={val:F0}.");
 		_suppressNextAddPrefab = true;
@@ -81,8 +66,6 @@ public static class LiquidSync
 
 	private static void BurnPostfix(Liquid __instance, bool __state)
 	{
-		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cf: Unknown result type (might be due to invalid IL or missing references)
 		if (_suppressNextIgnite)
 		{
 			_suppressNextIgnite = false;
@@ -101,11 +84,6 @@ public static class LiquidSync
 
 	public static void ApplyIgnited(PacketReader r)
 	{
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
 		string text = r.Str();
 		Vector3 val = r.Vec3();
 		Liquid val2 = null;

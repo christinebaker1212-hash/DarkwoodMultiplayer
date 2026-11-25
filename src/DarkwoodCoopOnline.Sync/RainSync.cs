@@ -29,10 +29,6 @@ public static class RainSync
 
 	public static void ApplyHeartbeat(PacketReader r)
 	{
-		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ba: Expected O, but got Unknown
-		//IL_00cb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d5: Expected O, but got Unknown
 		bool rainToday = r.Bool();
 		float timeToStart = r.Float();
 		float lightningTime = r.Float();

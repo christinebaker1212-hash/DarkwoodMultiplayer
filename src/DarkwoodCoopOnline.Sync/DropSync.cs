@@ -21,22 +21,11 @@ public static class DropSync
 
 	public static byte[] PollCreates(Vector3 p1, Vector3 p2)
 	{
-		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02c2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ee: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0107: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012f: Unknown result type (might be due to invalid IL or missing references)
 		List<Item> list = null;
 		Item[] array = SceneCache.Items();
 		foreach (Item val in array)
 		{
-			if ((Object)(object)val == (Object)null || !val.isDroppedItem || (Object)(object)((Component)val).GetComponent<Trigger>() != (Object)null || _known.ContainsKey(val) || Mathf.Min(Vector3.Distance(((Component)val).transform.position, p1), Vector3.Distance(((Component)val).transform.position, p2)) > 4000f)
+			if ((Object)(object)val == (Object)null || !val.isDroppedItem || (Object)(object)((Component)val).GetComponent<Trigger>() != (Object)null || _known.ContainsKey(val) || CoopPeers.MinDistance(((Component)val).transform.position, p1) > 4000f)
 			{
 				continue;
 			}
@@ -117,15 +106,6 @@ public static class DropSync
 
 	public static void ApplyCreate(PacketReader r)
 	{
-		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_016f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01f2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0200: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01de: Unknown result type (might be due to invalid IL or missing references)
 		int num = r.UShort();
 		for (int i = 0; i < num; i++)
 		{

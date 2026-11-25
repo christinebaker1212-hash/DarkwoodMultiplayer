@@ -53,9 +53,6 @@ public static class ContainerSync
 
 	private static bool IsContainerType(Inventory.InvType t)
 	{
-		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0003: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0006: Invalid comparison between Unknown and I4
 		if ((int)t != 0)
 		{
 			return (int)t == 60;
@@ -65,9 +62,6 @@ public static class ContainerSync
 
 	private static string ComputeKey(Item item, Inventory inv)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0008: Invalid comparison between Unknown and I4
-		//IL_0049: Unknown result type (might be due to invalid IL or missing references)
 		if ((int)inv.invType == 60)
 		{
 			Character component = ((Component)item).GetComponent<Character>();
@@ -99,8 +93,6 @@ public static class ContainerSync
 
 	private static string Key(Vector3 p)
 	{
-		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
 		return $"{Mathf.RoundToInt(p.x)}_{Mathf.RoundToInt(p.z)}";
 	}
 
@@ -143,12 +135,6 @@ public static class ContainerSync
 
 	public static List<byte[]> PollChanges(Vector3 p1, Vector3 p2, bool isHost)
 	{
-		//IL_0036: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0061: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a0: Unknown result type (might be due to invalid IL or missing references)
 		List<byte[]> list = null;
 		Item[] array = SceneCache.Items();
 		foreach (Item val in array)
@@ -158,7 +144,7 @@ public static class ContainerSync
 				continue;
 			}
 			Inventory component = ((Component)val).GetComponent<Inventory>();
-			if ((Object)(object)component == (Object)null || !IsContainerType(component.invType) || Mathf.Min(Vector3.Distance(((Component)val).transform.position, p1), Vector3.Distance(((Component)val).transform.position, p2)) > 4000f)
+			if ((Object)(object)component == (Object)null || !IsContainerType(component.invType) || CoopPeers.MinDistance(((Component)val).transform.position, p1) > 4000f)
 			{
 				continue;
 			}
@@ -344,9 +330,6 @@ public static class ContainerSync
 
 	private static Inventory FindByKey(string key)
 	{
-		//IL_00f8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0110: Unknown result type (might be due to invalid IL or missing references)
 		if (_byKey.TryGetValue(key, out var value) && (Object)(object)value != (Object)null)
 		{
 			return value;

@@ -16,15 +16,6 @@ public static class PropSync
 
 	public static byte[] PollChanges(Vector3 p1, Vector3 p2)
 	{
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
 		List<KeyValuePair<Vector3, bool>> list = null;
 		Door[] array = SceneCache.Doors();
 		foreach (Door val in array)
@@ -34,7 +25,7 @@ public static class PropSync
 				continue;
 			}
 			Vector3 position = ((Component)val).transform.position;
-			if (Mathf.Min(Vector3.Distance(position, p1), Vector3.Distance(position, p2)) > 4000f)
+			if (CoopPeers.MinDistance(position, p1) > 4000f)
 			{
 				continue;
 			}
@@ -68,11 +59,6 @@ public static class PropSync
 
 	public static void ApplyDoors(PacketReader r)
 	{
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
 		int num = r.UShort();
 		for (int i = 0; i < num; i++)
 		{
@@ -97,8 +83,6 @@ public static class PropSync
 
 	private static Door FindNearest(Vector3 pos)
 	{
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
 		Door result = null;
 		float num = 250f;
 		Door[] array = SceneCache.Doors();
@@ -119,8 +103,6 @@ public static class PropSync
 
 	private static string Key(Vector3 p)
 	{
-		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
 		return $"{Mathf.RoundToInt(p.x)}_{Mathf.RoundToInt(p.z)}";
 	}
 

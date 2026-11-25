@@ -15,9 +15,6 @@ public static class LocationDiscoverySync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0074: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;

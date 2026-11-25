@@ -98,9 +98,6 @@ public static class NpcStateSync
 
 	public static void ApplyChanges(PacketReader r)
 	{
-		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0075: Expected O, but got Unknown
 		Flags instance = Singleton<Flags>.Instance;
 		int num = r.UShort();
 		for (int i = 0; i < num; i++)

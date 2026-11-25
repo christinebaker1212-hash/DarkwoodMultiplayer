@@ -24,9 +24,6 @@ public static class PropSpawnSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008e: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -52,8 +49,6 @@ public static class PropSpawnSync
 
 	private static void AfterAddPrefab(GameObject __result)
 	{
-		//IL_0036: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)__result == (Object)null || !CoopRuntime.SessionActive || (Object)(object)__result.GetComponent<Character>() != (Object)null)
 		{
 			return;
@@ -74,12 +69,6 @@ public static class PropSpawnSync
 
 	private static void SyncProp(string key, GameObject go)
 	{
-		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00da: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0112: Unknown result type (might be due to invalid IL or missing references)
 		string name = ((Object)go).name;
 		if (CoopRuntime.Session != null && CoopRuntime.Session.Role == NetRole.Host)
 		{
@@ -109,11 +98,6 @@ public static class PropSpawnSync
 
 	public static void ApplyRemote(PacketReader r)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0049: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
 		string text = r.Str();
 		string text2 = r.Str();
 		Vector3 val = r.Vec3();

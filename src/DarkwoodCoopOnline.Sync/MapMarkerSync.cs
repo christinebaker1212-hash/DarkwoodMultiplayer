@@ -17,9 +17,6 @@ public static class MapMarkerSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005a: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;

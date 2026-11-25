@@ -25,16 +25,6 @@ public static class PrologueCutsceneHoldSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Expected O, but got Unknown
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004a: Expected O, but got Unknown
-		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0080: Expected O, but got Unknown
-		//IL_00a8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b6: Expected O, but got Unknown
-		//IL_00fa: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0108: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;

@@ -18,25 +18,13 @@ public class Plugin : BaseUnityPlugin
 
 	internal static TimestampedLogSource Log;
 
-	private ConfigEntry<string> _transportMode;
-
-	private ConfigEntry<int> _localPort;
-
-	private ConfigEntry<int> _remotePort;
-
-	private ConfigEntry<string> _peerSteamId;
-
-	private ConfigEntry<string> _lanPeerIp;
-
-	private ConfigEntry<int> _lanPort;
+	private ConfigEntry<bool> _debugKeys;
 
 	private ConfigEntry<bool> _voiceEnabled;
 
 	private ConfigEntry<string> _voiceDevice;
 
 	private CoopSession _session;
-
-	private bool _autoLoopbackPendingWorld;
 
 	internal static Plugin Instance;
 
@@ -72,17 +60,7 @@ public class Plugin : BaseUnityPlugin
 
 	private Rect _connectionPanelRect = new Rect(10f, 60f, 320f, 40f);
 
-	internal static bool TransportModeIsLan
-	{
-		get
-		{
-			if ((Object)(object)Instance != (Object)null && Instance._transportMode != null)
-			{
-				return Instance._transportMode.Value.Equals("LAN", StringComparison.OrdinalIgnoreCase);
-			}
-			return false;
-		}
-	}
+	internal static bool TransportModeIsLan => false;
 
 	internal bool HasSession => _session != null;
 
@@ -101,33 +79,11 @@ public class Plugin : BaseUnityPlugin
 			Log.LogInfo("[VersionCheck] OK - Plugin.Version e AssemblyVersion batem (0.3.93).");
 		}
 		Application.runInBackground = true;
-		_transportMode = ((BaseUnityPlugin)this).Config.Bind<string>("Transport", "Mode", "Loopback", "Loopback (UDP 127.0.0.1, teste numa máquina) ou Steam (relay P2P, online real) ou LAN (UDP direto por IP, via Radmin/Hamachi/rede local — sem depender do P2P da Steam)");
-		_localPort = ((BaseUnityPlugin)this).Config.Bind<int>("Loopback", "LocalPort", 7777, "Porta local (troque entre as 2 cópias)");
-		_remotePort = ((BaseUnityPlugin)this).Config.Bind<int>("Loopback", "RemotePort", 7778, "Porta do peer");
-		_peerSteamId = ((BaseUnityPlugin)this).Config.Bind<string>("Steam", "PeerSteamId64", "0", "SteamID64 do outro jogador");
-		_lanPeerIp = ((BaseUnityPlugin)this).Config.Bind<string>("LAN", "PeerIP", "", "IP do HOST (obrigatório só pra quem vai como CLIENTE) — o IP virtual do Radmin/Hamachi/ZeroTier, ou o IP da rede local");
-		_lanPort = ((BaseUnityPlugin)this).Config.Bind<int>("LAN", "Port", 7777, "Porta UDP usada nos 2 lados (mesmo valor, máquinas diferentes não colidem)");
+		CoopConfig.Bind(((BaseUnityPlugin)this).Config);
+		_debugKeys = ((BaseUnityPlugin)this).Config.Bind<bool>("Debug", "DiagnosticHotkeys", false, "Developer diagnostic keys (F11/F12/Insert/Home/End/Delete/PageUp/PageDown/Backspace/keypad). Several start per-frame logging that slows the game - leave off unless you are debugging.");
 		_voiceEnabled = ((BaseUnityPlugin)this).Config.Bind<bool>("Voice", "Enabled", false, "Voice chat por proximidade (grava do microfone só durante sessão pareada)");
 		_voiceDevice = ((BaseUnityPlugin)this).Config.Bind<string>("Voice", "Device", "", "Nome do dispositivo de microfone (Microphone.devices) — vazio usa o 1º disponível");
-		Log.LogInfo("=== Darkwood Co-op Online 0.1.0 (M0) carregado ===");
-		Log.LogInfo("Transporte=" + _transportMode.Value + "  F5=Auto  F7=Host  F8=Client  F6=DumpSaveApi  F4=Diag  F3=Overlay  F10=Stop");
-		Log.LogInfo("F11=capturar estrutura da porta mais próxima  F12=stream por frame do estado da porta");
-		Log.LogInfo("F9=capturar pernas REAL vs PUPPET  Insert=stream por frame das pernas");
-		Log.LogInfo("Home=capturar Item switchable/isLight mais próximo  End=stream por frame");
-		Log.LogInfo("Delete=capturar armadilha (Item+Trigger) mais próxima  PageDown=stream por frame");
-		Log.LogInfo("PageUp=liga/desliga profiling de performance (loga [PerfSpike] sozinho ao travar)");
-		Log.LogInfo("Backspace=capturar itens largados perto  Keypad0=liga/desliga watch (aparecer/sumir)");
-		Log.LogInfo("Keypad1=capturar container (baú/guarda-roupa) mais próximo  Keypad2=stream por frame dos slots");
-		Log.LogInfo("Keypad4=capturar cenário/eventos noturnos agora  Keypad3=liga/desliga stream de eventos noturnos");
-		Log.LogInfo("Caído/reanimar: ao chegar a 0 de vida vira 'caído' em vez de morrer — segure F perto do peer caído p/ reanimar.");
-		Log.LogInfo("DEBUG: Keypad5=própria vida→1 (testar caído na hora)  Keypad6=spawnar inimigo perto  Keypad7=zerar vida do inimigo mais próximo");
-		Log.LogInfo("Keypad8=capturar alvo (target) dos inimigos próximos  Keypad9=liga/desliga stream de troca de alvo");
-		Log.LogInfo("~ (til) = painel de DEBUG com botões (conexão, spawns, tempo, eventos, IA)");
-		Log.LogInfo("KeypadDivide=capturar IA do cachorro mais próximo  KeypadMultiply=liga/desliga stream detalhado");
-		Log.LogInfo("KeypadMinus=capturar TODOS os animadores (tk2dSpriteAnimator) do cachorro mais próximo, e qual o sync usa");
-		Log.LogInfo("F1=teleportar até o peer AGORA (escape manual - ex.: preso do lado de fora de porta trancada em boss)");
-		Log.LogInfo("F2=liga/desliga VER O CONE DE VISÃO do peer (opt-in, experimental - desliga na hora se der problema)");
-		Log.LogInfo("N=liga/desliga NOME DO PEER em cima do personagem (opt-in, texto só - sem risco)");
+		Log.LogInfo($"=== Darkwood Co-op Online {Version} ({Proto.MaxPlayers} players) loaded ===  HOST/JOIN from the main menu, F10 = leave, 0 = co-op window, ~ = debug panel");
 		DownedSync.EnsurePatched("com.felipe.darkwoodcooponline");
 		PlayerDamageSync.EnsurePatched("com.felipe.darkwoodcooponline");
 		NightEventSync.EnsurePatched("com.felipe.darkwoodcooponline");
@@ -202,8 +158,16 @@ public class Plugin : BaseUnityPlugin
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	private void StartSteamOnlyServices()
 	{
-		SaveFetchServer.EnsureStarted();
-		AutoJoin.CheckStartup();
+		SteamCarrier.Start();
+		// "Join game" from the Steam friends list / an accepted invite
+		SteamCarrier.OnJoinRequested = delegate(ulong host)
+		{
+			if (CoopConnection.Current == null)
+			{
+				CoopUI.Close();
+				JoinFlow.JoinSteam(host, SteamCarrier.NameOf(host));
+			}
+		};
 	}
 
 	internal void SetVoiceEnabled(bool enabled)
@@ -222,21 +186,23 @@ public class Plugin : BaseUnityPlugin
 	{
 		PauseSync.ReassertTimeScale();
 		PerfDiagnostics.FrameStart();
-		SaveFetchServer.Tick();
-		AutoJoin.Tick();
-		if (Input.GetKeyDown((KeyCode)286))
+		if (SteamAvailability.Available)
 		{
-			StartAutoLoopback();
+			PumpSteam();
 		}
-		TickAutoLoopbackPendingWorld();
-		if (Input.GetKeyDown((KeyCode)288))
+		JoinFlow.Tick(Time.unscaledDeltaTime);
+		HostFlow.Tick();
+		CoopUI.Tick();
+		if (Input.GetKeyDown((KeyCode)288) && _session == null && (Object)(object)Player.Instance != (Object)null && !CoopUI.IsOpen)
 		{
-			StartSession(NetRole.Host);
+			HostFlow.StartHosting();
 		}
-		if (Input.GetKeyDown((KeyCode)289))
+		if (Input.GetKeyDown((KeyCode)289) && _session == null && (Object)(object)Player.Instance == (Object)null && !CoopUI.IsOpen)
 		{
-			StartSession(NetRole.Client);
+			CoopUI.OpenJoin();
 		}
+		if (_debugKeys.Value)
+		{
 		DebugCheatKeys.Tick();
 		if (Input.GetKeyDown((KeyCode)91))
 		{
@@ -311,6 +277,7 @@ public class Plugin : BaseUnityPlugin
 			NightEventDiagnostics.ToggleStream();
 		}
 		NightEventDiagnostics.Tick();
+		}
 		CutsceneDiagnostics.Tick();
 		TrainWreckEncounterPullSync.Tick();
 		ForbidInputsWatchdog.Tick();
@@ -320,6 +287,8 @@ public class Plugin : BaseUnityPlugin
 		PlayerVisionWatchdog.Tick();
 		CharacterMessageSync.Tick();
 		DreamSync.Tick();
+		if (_debugKeys.Value)
+		{
 		if (Input.GetKeyDown((KeyCode)267))
 		{
 			DogAiDiagnostics.Capture();
@@ -333,6 +302,7 @@ public class Plugin : BaseUnityPlugin
 			DogAiDiagnostics.CaptureAnimators();
 		}
 		DogAiDiagnostics.Tick();
+		}
 		AnimationSyncDiagnostics.Tick();
 		DayTransitionDiagnostics.Tick();
 		MainMenuHostJoinUI.Tick();
@@ -353,6 +323,8 @@ public class Plugin : BaseUnityPlugin
 		{
 			_showConnectionPanel = !_showConnectionPanel;
 		}
+		if (_debugKeys.Value)
+		{
 		if (Input.GetKeyDown((KeyCode)261))
 		{
 			DebugCheats.SetOwnHealthCritical();
@@ -373,6 +345,7 @@ public class Plugin : BaseUnityPlugin
 		{
 			EnemyAiDiagnostics.ToggleStream();
 		}
+		}
 		if (Input.GetKeyDown((KeyCode)282))
 		{
 			PeerTeleport.TeleportToPeer();
@@ -391,91 +364,24 @@ public class Plugin : BaseUnityPlugin
 		_session?.Update();
 		if (_session != null && _session.PeerLeftSignaled)
 		{
-			bool num = _session.Role == NetRole.Host;
+			string text = _session.EndReason ?? "The host left the game.";
 			StopSession();
-			if (num)
-			{
-				Log.LogInfo("[Session] eu era host - reiniciando hospedagem automaticamente, voltando a aguardar jogador.");
-				StartHostSession();
-			}
-			else
-			{
-				Log.LogInfo("[Session] eu era cliente e o host voltou pro menu - sessão encerrada, reconecte manualmente (F8/convite) quando ele hospedar de novo.");
-			}
+			CoopNotice.Show(text + " You keep playing alone - REJOIN from the main menu when they host again.", 12f);
 		}
 		PerfDiagnostics.FrameEnd();
 	}
 
 	private void OnGUI()
 	{
-		//IL_020c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0218: Unknown result type (might be due to invalid IL or missing references)
-		//IL_022c: Expected O, but got Unknown
-		//IL_0227: Unknown result type (might be due to invalid IL or missing references)
-		//IL_022c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0240: Unknown result type (might be due to invalid IL or missing references)
-		//IL_024c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0260: Expected O, but got Unknown
-		//IL_025b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0260: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Expected O, but got Unknown
-		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007c: Expected O, but got Unknown
-		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a7: Expected O, but got Unknown
-		//IL_0108: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0150: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0169: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0190: Unknown result type (might be due to invalid IL or missing references)
-		//IL_019a: Expected O, but got Unknown
-		//IL_01c4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01ae: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01dc: Unknown result type (might be due to invalid IL or missing references)
 		MainMenuHostJoinUI.Draw();
+		CoopUI.Draw();
+		CoopNotice.Draw();
 		SaveSlotPickerUI.Draw();
 		VoiceSettingsUI.Draw();
 		LobbySync.Draw();
 		if (_showOverlay && _session != null)
 		{
-			if (_ovBg == null)
-			{
-				Texture2D val = new Texture2D(1, 1);
-				val.SetPixel(0, 0, new Color(0f, 0f, 0f, 0.6f));
-				val.Apply();
-				GUIStyle val2 = new GUIStyle();
-				val2.normal.background = val;
-				_ovBg = val2;
-				_ovLabel = new GUIStyle(GUI.skin.label)
-				{
-					fontSize = 18,
-					fontStyle = (FontStyle)1,
-					alignment = (TextAnchor)4
-				};
-			}
-			bool flag = _session.Role == NetRole.Host;
-			string text = (flag ? "HOST" : "CLIENT");
-			string text2 = (_session.Linked ? "connected" : "waiting...");
-			float num = 240f;
-			float num2 = 46f;
-			float num3 = ((float)Screen.width - num) * 0.5f;
-			float num4 = 6f;
-			GUI.Box(new Rect(num3, num4, num, num2), GUIContent.none, _ovBg);
-			_ovLabel.normal.textColor = (flag ? new Color(0.4f, 1f, 0.4f) : new Color(0.4f, 0.8f, 1f));
-			GUI.Label(new Rect(num3, num4 + 2f, num, 24f), text + "  ·  " + text2, _ovLabel);
-			GUIStyle val3 = new GUIStyle(_ovLabel)
-			{
-				fontSize = 13
-			};
-			val3.normal.textColor = (Color)((_fps < 45f) ? new Color(1f, 0.5f, 0.3f) : Color.white);
-			GUI.Label(new Rect(num3, num4 + 24f, num, 20f), $"FPS: {_fps:F0}", val3);
+			CoopUI.DrawHud(_session);
 		}
 		if (_showDebugPanel)
 		{
@@ -489,19 +395,18 @@ public class Plugin : BaseUnityPlugin
 		DrawCredit();
 		if (_session != null && _session.Linked)
 		{
-			DownedUI.Draw(_session.Puppet);
+			DownedUI.Draw(CoopPeers.Nearest((Object)(object)Player.Instance != (Object)null ? ((Component)Player.Instance).transform.position : Vector3.zero, (RemotePlayerPuppet pp) => DownedSync.IsPeerDowned(pp.Slot)) ?? _session.Puppet);
 			PauseUI.Draw(_session.Role);
-			PeerNameTagSync.Draw(_session, _session.Puppet);
+			foreach (RemotePlayerPuppet puppet in _session.PuppetList)
+			{
+				PeerNameTagSync.Draw(_session, puppet);
+			}
 		}
 	}
 
 	private void DrawBottomStatus()
 	{
-		if (AutoJoin.IsActive)
-		{
-			DrawStatusBanner(AutoJoin.StatusText, AutoJoin.IsFailed);
-		}
-		else if (LanSaveTransfer.IsActive)
+		if (LanSaveTransfer.IsActive)
 		{
 			DrawStatusBanner(LanSaveTransfer.StatusText, LanSaveTransfer.IsFailed);
 		}
@@ -509,21 +414,6 @@ public class Plugin : BaseUnityPlugin
 
 	private void DrawStatusBanner(string statusText, bool failed)
 	{
-		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0013: Expected O, but got Unknown
-		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0051: Expected O, but got Unknown
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0061: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0075: Expected O, but got Unknown
-		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0121: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0126: Unknown result type (might be due to invalid IL or missing references)
-		//IL_016a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0154: Unknown result type (might be due to invalid IL or missing references)
 		if (_bottomStatusBg == null)
 		{
 			Texture2D val = new Texture2D(1, 1);
@@ -554,12 +444,6 @@ public class Plugin : BaseUnityPlugin
 
 	private void DrawCredit()
 	{
-		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0099: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0025: Expected O, but got Unknown
-		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
 		if (_creditLabel == null)
 		{
 			_creditLabel = new GUIStyle(GUI.skin.label)
@@ -574,47 +458,49 @@ public class Plugin : BaseUnityPlugin
 
 	private void DrawConnectionPanel(int id)
 	{
-		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01c1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d5: Unknown result type (might be due to invalid IL or missing references)
-		GUILayout.Label("Mode: " + _transportMode.Value, GUI.skin.box, Array.Empty<GUILayoutOption>());
-		bool available = SteamAvailability.Available;
-		GUILayout.BeginHorizontal(Array.Empty<GUILayoutOption>());
-		if (GUILayout.Button("Loopback\n(this PC)", Array.Empty<GUILayoutOption>()))
+		CoopConnection current = CoopConnection.Current;
+		if (current == null)
 		{
-			_transportMode.Value = "Loopback";
+			GUILayout.Label("Not in a co-op game. Use HOST A GAME / JOIN A GAME on the main menu.", GUI.skin.box, Array.Empty<GUILayoutOption>());
 		}
-		GUI.enabled = available;
-		if (GUILayout.Button("Steam\n(friend)", Array.Empty<GUILayoutOption>()))
+		else
 		{
-			_transportMode.Value = "Steam";
-		}
-		GUI.enabled = true;
-		if (GUILayout.Button("LAN\n(Radmin/Hamachi)", Array.Empty<GUILayoutOption>()))
-		{
-			_transportMode.Value = "LAN";
-		}
-		GUILayout.EndHorizontal();
-		if (!available)
-		{
-			Color color = GUI.color;
-			GUI.color = new Color(1f, 0.8f, 0.4f);
-			GUILayout.Label("Steam not available in this build of the game (Epic/GOG?) - use LAN.", GUI.skin.box, Array.Empty<GUILayoutOption>());
-			GUI.color = color;
-		}
-		if (_transportMode.Value.Equals("LAN", StringComparison.OrdinalIgnoreCase))
-		{
-			GUILayout.Space(6f);
-			GUILayout.Label("Host's IP (client only):", Array.Empty<GUILayoutOption>());
-			_lanPeerIp.Value = SanitizeIpInput(GUILayout.TextField(_lanPeerIp.Value, Array.Empty<GUILayoutOption>()));
-			GUILayout.Label($"Port: {_lanPort.Value} (same on both sides)", Array.Empty<GUILayoutOption>());
-		}
-		else if (_transportMode.Value.Equals("Steam", StringComparison.OrdinalIgnoreCase))
-		{
-			GUILayout.Space(6f);
-			GUILayout.Label("PeerSteamId64 (client manual only — JOIN button doesn't need this):", Array.Empty<GUILayoutOption>());
-			_peerSteamId.Value = GUILayout.TextField(_peerSteamId.Value, Array.Empty<GUILayoutOption>());
+			GUILayout.Label((current.IsHost ? "Hosting" : "Playing in") + " \"" + current.RoomName + "\"", GUI.skin.box, Array.Empty<GUILayoutOption>());
+			for (int i = 0; i < Proto.MaxPlayers; i++)
+			{
+				CoopConnection.Peer peer = current.Roster[i];
+				if (peer != null || i == current.MySlot)
+				{
+					GUILayout.Label($"  {i + 1}. {((i == current.MySlot) ? (CoopConfig.MyName() + " (you)") : peer.Name)}{((i == 0) ? "  [host]" : "")}{((peer != null && !peer.InGame && i != current.MySlot) ? "  (loading)" : "")}", Array.Empty<GUILayoutOption>());
+				}
+			}
+			if (!current.IsHost && current.RttMs >= 0)
+			{
+				GUILayout.Label($"Ping to host: {current.RttMs} ms", Array.Empty<GUILayoutOption>());
+			}
+			if (current.IsHost)
+			{
+				GUILayout.Space(4f);
+				GUILayout.Label(HostFlow.InviteLine, Array.Empty<GUILayoutOption>());
+				if (!string.IsNullOrEmpty(PortMapper.Code) && GUILayout.Button("Copy invite code " + PortMapper.Code, Array.Empty<GUILayoutOption>()))
+				{
+					GUIUtility.systemCopyBuffer = PortMapper.Code;
+					CoopNotice.Show("Invite code copied");
+				}
+				string text = PortMapper.LanAddress();
+				if (text != null)
+				{
+					GUILayout.Label("Same network: " + text + ((current.Server.Port != Proto.DefaultPort) ? (":" + current.Server.Port) : ""), Array.Empty<GUILayoutOption>());
+				}
+				if (PortMapper.FindVpnAddress(out var address, out var name))
+				{
+					GUILayout.Label(name + ": " + address, Array.Empty<GUILayoutOption>());
+				}
+			}
+			if (GUILayout.Button(current.IsHost ? "Stop hosting (F10)" : "Leave the game (F10)", Array.Empty<GUILayoutOption>()))
+			{
+				StopSession();
+			}
 		}
 		GUILayout.Space(6f);
 		Color color2 = GUI.color;
@@ -642,22 +528,12 @@ public class Plugin : BaseUnityPlugin
 
 	private void DrawDebugPanel(int id)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_06a3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_06a8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_06c2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_06b0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_06f8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0839: Unknown result type (might be due to invalid IL or missing references)
 		_debugPanelScroll = GUILayout.BeginScrollView(_debugPanelScroll, (GUILayoutOption[])(object)new GUILayoutOption[2]
 		{
 			GUILayout.Width(460f),
 			GUILayout.Height(Mathf.Min((float)Screen.height - 100f, 700f))
 		});
 		GUILayout.Label((_session != null) ? string.Format("Session: {0} - {1}", _session.Role, _session.Linked ? "connected" : "waiting...") : "Session: none", Array.Empty<GUILayoutOption>());
-		GUILayout.Label("Steam invite: " + AutoJoin.StatusText, Array.Empty<GUILayoutOption>());
 		GUILayout.Space(6f);
 		GUILayout.Label("Menu UI (investigação botão nativo)", GUI.skin.box, Array.Empty<GUILayoutOption>());
 		if (GUILayout.Button("Create+dump HOST/JOIN native buttons (must be at MAIN MENU, LogOutput.log)", Array.Empty<GUILayoutOption>()))
@@ -666,48 +542,16 @@ public class Plugin : BaseUnityPlugin
 		}
 		GUILayout.Space(6f);
 		GUILayout.Label("Connection", GUI.skin.box, Array.Empty<GUILayoutOption>());
-		GUILayout.Label("Mode: " + _transportMode.Value, Array.Empty<GUILayoutOption>());
 		GUILayout.BeginHorizontal(Array.Empty<GUILayoutOption>());
-		if (GUILayout.Button("Loopback (test here on this PC)", Array.Empty<GUILayoutOption>()))
+		if (GUILayout.Button("Host now (F7)", Array.Empty<GUILayoutOption>()) && _session == null && (Object)(object)Player.Instance != (Object)null)
 		{
-			_transportMode.Value = "Loopback";
-			Log.LogInfo("[Modo] trocado pra Loopback (F7/F8 manual vão usar UDP local).");
+			HostFlow.StartHosting();
 		}
-		GUI.enabled = SteamAvailability.Available;
-		if (GUILayout.Button("Steam (play with friend)", Array.Empty<GUILayoutOption>()))
-		{
-			_transportMode.Value = "Steam";
-			Log.LogInfo("[Modo] trocado pra Steam (F7/F8 manual vão usar P2P real).");
-		}
-		GUI.enabled = true;
-		if (GUILayout.Button("LAN (Radmin/Hamachi/local network)", Array.Empty<GUILayoutOption>()))
-		{
-			_transportMode.Value = "LAN";
-			Log.LogInfo("[Modo] trocado pra LAN (F7/F8 manual vão usar UDP direto por IP).");
-		}
-		GUILayout.EndHorizontal();
-		if (_transportMode.Value.Equals("LAN", StringComparison.OrdinalIgnoreCase))
-		{
-			GUILayout.BeginHorizontal(Array.Empty<GUILayoutOption>());
-			GUILayout.Label("LAN.PeerIP (só CLIENTE precisa):", (GUILayoutOption[])(object)new GUILayoutOption[1] { GUILayout.Width(220f) });
-			_lanPeerIp.Value = SanitizeIpInput(GUILayout.TextField(_lanPeerIp.Value, (GUILayoutOption[])(object)new GUILayoutOption[1] { GUILayout.Width(140f) }));
-			GUILayout.EndHorizontal();
-			GUILayout.Label($"LAN.Port: {_lanPort.Value} (mesmo valor nos 2 lados)", Array.Empty<GUILayoutOption>());
-		}
-		GUILayout.BeginHorizontal(Array.Empty<GUILayoutOption>());
-		if (GUILayout.Button("Host (F7)", Array.Empty<GUILayoutOption>()))
-		{
-			StartSession(NetRole.Host);
-		}
-		if (GUILayout.Button("Client (F8)", Array.Empty<GUILayoutOption>()))
-		{
-			StartSession(NetRole.Client);
-		}
-		GUILayout.EndHorizontal();
 		if (GUILayout.Button("Stop (F10)", Array.Empty<GUILayoutOption>()))
 		{
 			StopSession();
 		}
+		GUILayout.EndHorizontal();
 		GUILayout.Space(8f);
 		GUILayout.Label("Peer visibility", GUI.skin.box, Array.Empty<GUILayoutOption>());
 		if (GUILayout.Button(PeerNameTagSync.Enabled ? "Peer name tag: ON (N)" : "Peer name tag: OFF (N)", Array.Empty<GUILayoutOption>()))
@@ -846,194 +690,20 @@ public class Plugin : BaseUnityPlugin
 		GUI.DragWindow(new Rect(0f, 0f, 10000f, 20f));
 	}
 
-	private void StartAutoLoopback()
+	// HostFlow / JoinFlow hand the session they made to the plugin, which runs it every frame
+	internal void AdoptSession(CoopSession session)
 	{
-		if (_session != null)
+		if (_session != null && _session != session)
 		{
-			Log.LogWarning("Sessão já ativa — F10 para encerrar antes.");
+			StopSession();
 		}
-		else
-		{
-			if (_autoLoopbackPendingWorld)
-			{
-				return;
-			}
-			if ((Object)(object)Player.Instance == (Object)null)
-			{
-				if (TryAutoLoadSlot1())
-				{
-					_autoLoopbackPendingWorld = true;
-					Log.LogInfo("[Auto] carregando save do slot 1 - conecta e equipa a lanterna sozinho assim que o mundo terminar.");
-				}
-			}
-			else
-			{
-				DoStartAutoLoopback();
-			}
-		}
-	}
-
-	private void TickAutoLoopbackPendingWorld()
-	{
-		if (_autoLoopbackPendingWorld && !((Object)(object)Player.Instance == (Object)null) && Core.worldGenFinished())
-		{
-			_autoLoopbackPendingWorld = false;
-			DoStartAutoLoopback();
-		}
-	}
-
-	private bool TryAutoLoadSlot1()
-	{
-		SaveManager instance = Singleton<SaveManager>.Instance;
-		UI instance2 = Singleton<UI>.Instance;
-		if ((Object)(object)instance == (Object)null || (Object)(object)instance2 == (Object)null)
-		{
-			Log.LogWarning("[Auto] SaveManager/UI ainda não prontos - espera o menu principal terminar de carregar antes de apertar F5.");
-			return false;
-		}
-		MainMenu.SaveState val = instance.loadGameProfiles();
-		if (val != null && val.profiles != null)
-		{
-			Core.profiles = val.profiles;
-		}
-		GameProfile val2 = Core.profiles?.Find((GameProfile p) => p != null && p.id == 1);
-		if (val2 == null)
-		{
-			Log.LogWarning("[Auto] perfil de save #1 não encontrado - crie/salve no slot 1 antes de usar o F5 automático.");
-			return false;
-		}
-		Core.currentProfile = val2;
-		instance.updateFilePaths();
-		((MonoBehaviour)instance2).StartCoroutine(instance2.initLoadGame());
-		return true;
-	}
-
-	private void DoStartAutoLoopback()
-	{
-		NetRole role;
-		LoopbackUdpTransport loopbackUdpTransport = LoopbackUdpTransport.CreateAuto(_localPort.Value, _remotePort.Value, out role);
-		if (loopbackUdpTransport != null)
-		{
-			Log.LogInfo($"[Auto] esta instância será {role}.");
-			_session = new CoopSession(loopbackUdpTransport, role);
-			if (!_session.Start())
-			{
-				_session = null;
-			}
-		}
-	}
-
-	private void StartSession(NetRole role)
-	{
-		if (_session != null)
-		{
-			Log.LogWarning("Sessão já ativa — F10 para encerrar antes.");
-			return;
-		}
-		ITransport transport = BuildTransport(role);
-		if (transport == null)
-		{
-			return;
-		}
-		_session = new CoopSession(transport, role);
-		if (!_session.Start())
-		{
-			_session = null;
-			return;
-		}
-		LobbySync.Begin(role == NetRole.Host);
-		if (role == NetRole.Host)
-		{
-			AutoJoin.SetHostRichPresence(_transportMode.Value);
-			if (_transportMode.Value.Equals("LAN", StringComparison.OrdinalIgnoreCase))
-			{
-				LanSaveTransfer.StartServer(_lanPort.Value + 1);
-			}
-		}
-	}
-
-	internal bool StartClientSessionWith(ulong hostSteamId64)
-	{
-		if (_session != null)
-		{
-			Log.LogWarning("[AutoJoin] sessão já ativa — não reinicio.");
-			return true;
-		}
-		if (!SteamAvailability.Available)
-		{
-			Log.LogError("[AutoJoin] convite Steam recebido, mas esta build do jogo não tem Steam (" + SteamAvailability.UnavailableReason + ") - use o modo LAN.");
-			return false;
-		}
-		return StartClientSessionWithSteam(hostSteamId64);
+		_session = session;
 	}
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
-	private bool StartClientSessionWithSteam(ulong hostSteamId64)
+	private static void PumpSteam()
 	{
-		_session = new CoopSession(new SteamP2PTransport(hostSteamId64), NetRole.Client);
-		if (!_session.Start())
-		{
-			_session = null;
-			return false;
-		}
-		LobbySync.Begin(isHost: false);
-		Log.LogInfo($"[AutoJoin] sessão de cliente iniciada contra host {hostSteamId64}.");
-		return true;
-	}
-
-	internal void StartHostSession()
-	{
-		if (!_transportMode.Value.Equals("LAN", StringComparison.OrdinalIgnoreCase))
-		{
-			if (SteamAvailability.Available)
-			{
-				_transportMode.Value = "Steam";
-			}
-			else
-			{
-				_transportMode.Value = "LAN";
-				Log.LogWarning("[Modo] botão HOST: esta build do jogo não tem Steam (" + SteamAvailability.UnavailableReason + ") - modo trocado pra LAN. O CLIENTE precisa preencher LAN/PeerIP com o seu IP (painel `~`).");
-			}
-		}
-		StartSession(NetRole.Host);
-	}
-
-	private static string SanitizeIpInput(string raw)
-	{
-		if (!string.IsNullOrEmpty(raw))
-		{
-			return raw.Replace(';', '.').Replace(',', '.');
-		}
-		return raw;
-	}
-
-	internal bool TryBeginLanJoin()
-	{
-		if (_session != null)
-		{
-			Log.LogWarning("Sessão já ativa — F10 para encerrar antes.");
-			return true;
-		}
-		if (string.IsNullOrWhiteSpace(_lanPeerIp.Value))
-		{
-			LanSaveTransfer.ReportConfigError("LAN JOIN FAILED: no host IP configured. Press '0' to open the connection window and enter the host's IP first.");
-			Log.LogWarning("[LAN] JOIN clicado mas LAN.PeerIP está vazio - abra a janela de conexão ('0') e digite o IP do host antes.");
-			return false;
-		}
-		PrologueJoinSync.BeginLanJoin(_lanPeerIp.Value.Trim(), _lanPort.Value + 1);
-		return true;
-	}
-
-	internal bool StartClientSessionLan()
-	{
-		Log.LogInfo($"[LanSaveTransfer] StartClientSessionLan() chamado (modo={_transportMode.Value}, LAN.PeerIP='{_lanPeerIp.Value}', sessão já existe={_session != null}).");
-		if (_session != null)
-		{
-			Log.LogWarning("[LanSaveTransfer] sessão já ativa — não reinicio.");
-			return true;
-		}
-		StartSession(NetRole.Client);
-		return _session != null;
+		SteamCarrier.Pump();
 	}
 
 	internal void StopSessionExternal()
@@ -1041,61 +711,13 @@ public class Plugin : BaseUnityPlugin
 		StopSession();
 	}
 
-	private ITransport BuildTransport(NetRole role)
-	{
-		if (_transportMode.Value.Equals("Steam", StringComparison.OrdinalIgnoreCase))
-		{
-			if (!SteamAvailability.Available)
-			{
-				Log.LogError("Transporte 'Steam' pedido na config, mas esta build do jogo não tem Steam (" + SteamAvailability.UnavailableReason + "). Troque Transport/Mode para 'LAN' (e preencha LAN/PeerIP no cliente) no arquivo BepInEx/config/com.felipe.darkwoodcooponline.cfg, ou pelo painel `~` dentro do jogo.");
-				return null;
-			}
-			return BuildSteamTransport(role);
-		}
-		return BuildNonSteamTransport(role);
-	}
-
-	[MethodImpl(MethodImplOptions.NoInlining)]
-	private ITransport BuildSteamTransport(NetRole role)
-	{
-		ulong result;
-		bool flag = ulong.TryParse(_peerSteamId.Value, out result) && result != 0;
-		if (role == NetRole.Host)
-		{
-			return new SteamP2PTransport();
-		}
-		if (!flag)
-		{
-			Log.LogError("PeerSteamId64 inválido na config — defina o SteamID64 do outro jogador (ou use o botão JOIN do menu).");
-			return null;
-		}
-		return new SteamP2PTransport(result);
-	}
-
-	private ITransport BuildNonSteamTransport(NetRole role)
-	{
-		if (_transportMode.Value.Equals("LAN", StringComparison.OrdinalIgnoreCase))
-		{
-			if (role == NetRole.Host)
-			{
-				return LoopbackUdpTransport.CreateLanHost(_lanPort.Value);
-			}
-			string text = SanitizeIpInput(_lanPeerIp.Value.Trim());
-			if (string.IsNullOrWhiteSpace(text) || !IPAddress.TryParse(text, out IPAddress address))
-			{
-				Log.LogError("LAN.PeerIP inválido/vazio na config — defina o IP do host (o IP virtual do Radmin/Hamachi, por exemplo).");
-				return null;
-			}
-			return LoopbackUdpTransport.CreateLanClient(_lanPort.Value + 2, _lanPort.Value, address);
-		}
-		return new LoopbackUdpTransport(_localPort.Value, _remotePort.Value);
-	}
-
 	private void StopSession()
 	{
 		_session?.Stop();
 		_session = null;
-		AutoJoin.ClearHostRichPresence();
+		CoopConnection.Current?.Close();
+		CoopConnection.Current = null;
+		HostFlow.Stop();
 		LanSaveTransfer.StopServer();
 		UiPauseSuppress.Reset();
 		Log.LogInfo("[Session] encerrada.");

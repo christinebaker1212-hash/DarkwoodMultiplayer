@@ -16,12 +16,6 @@ public static class EnemyHitAnimSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Expected O, but got Unknown
-		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00db: Expected O, but got Unknown
-		//IL_00db: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;

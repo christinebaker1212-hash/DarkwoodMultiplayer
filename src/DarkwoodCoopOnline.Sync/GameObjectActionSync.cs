@@ -20,9 +20,6 @@ public static class GameObjectActionSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0048: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -32,23 +29,6 @@ public static class GameObjectActionSync
 
 	private static void AfterFire(GameEvent __instance, GameObject thisGO)
 	{
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001c: Invalid comparison between Unknown and I4
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004f: Invalid comparison between Unknown and I4
-		//IL_001f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0026: Invalid comparison between Unknown and I4
-		//IL_005d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0064: Invalid comparison between Unknown and I4
-		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Invalid comparison between Unknown and I4
-		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0030: Invalid comparison between Unknown and I4
-		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0119: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0143: Unknown result type (might be due to invalid IL or missing references)
 		if (_applyingRemote || !CoopRuntime.SessionActive || __instance == null)
 		{
 			return;
@@ -103,11 +83,6 @@ public static class GameObjectActionSync
 
 	public static void ApplyAction(PacketReader r)
 	{
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
 		string text = r.Str();
 		Vector3 val = r.Vec3();
 		bool flag = r.Bool();
@@ -149,8 +124,6 @@ public static class GameObjectActionSync
 
 	private static string KeyOf(string name, Vector3 p, bool remove)
 	{
-		//IL_0011: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
 		return $"{name}@{Mathf.RoundToInt(p.x)}_{Mathf.RoundToInt(p.z)}_{remove}";
 	}
 

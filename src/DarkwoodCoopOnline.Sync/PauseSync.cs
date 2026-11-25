@@ -7,7 +7,10 @@ public static class PauseSync
 {
 	private static bool _localIntent;
 
-	private static bool _peerIntent;
+	// slots of the other players who want the game paused (it's paused while anyone does)
+	private static readonly System.Collections.Generic.HashSet<int> _peerIntents = new System.Collections.Generic.HashSet<int>();
+
+	private static bool _peerIntent => _peerIntents.Count > 0;
 
 	private static bool _lastKnownCombined;
 
@@ -54,7 +57,7 @@ public static class PauseSync
 		{
 			_suppressForDoctorDream = false;
 			_localIntent = false;
-			_peerIntent = false;
+			_peerIntents.Clear();
 			_lastKnownCombined = Core.Paused;
 		}
 	}
@@ -104,11 +107,34 @@ public static class PauseSync
 		return PacketWriter.Begin(PacketType.PauseState).Bool(_localIntent).Finish();
 	}
 
-	public static void ApplyPeerState(PacketReader r)
+	public static void ApplyPeerState(PacketReader r, int from)
 	{
 		if (!_suppressForDoctorDream)
 		{
-			_peerIntent = r.Bool();
+			if (r.Bool())
+			{
+				_peerIntents.Add(from);
+			}
+			else
+			{
+				_peerIntents.Remove(from);
+			}
+			Recompute();
+		}
+	}
+
+	// A player who left can't keep the game paused
+	public static void OnPeerLeft(int slot)
+	{
+		if (_peerIntents.Remove(slot))
+		{
+			Recompute();
+		}
+	}
+
+	private static void Recompute()
+	{
+		{
 			bool flag = _localIntent || _peerIntent || _lobbyHold;
 			if (flag != Core.Paused)
 			{
@@ -137,7 +163,7 @@ public static class PauseSync
 	public static void Reset()
 	{
 		_localIntent = false;
-		_peerIntent = false;
+		_peerIntents.Clear();
 		_lobbyHold = false;
 		_dialogueExclusionLogged = false;
 		_suppressForDoctorDream = false;

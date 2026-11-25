@@ -32,8 +32,6 @@ public static class LampSync
 
 	private static Info GetInfo(Item it)
 	{
-		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c5: Unknown result type (might be due to invalid IL or missing references)
 		if (!_items.TryGetValue(it, out var value))
 		{
 			value = new Info
@@ -67,15 +65,11 @@ public static class LampSync
 
 	public static byte[] PollChanges(Vector3 p1, Vector3 p2)
 	{
-		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
 		List<KeyValuePair<string, bool>> list = null;
 		Item[] array = Scene();
 		foreach (Item val in array)
 		{
-			if ((Object)(object)val == (Object)null || !val.switchable || Mathf.Min(Vector3.Distance(((Component)val).transform.position, p1), Vector3.Distance(((Component)val).transform.position, p2)) > 4000f)
+			if ((Object)(object)val == (Object)null || !val.switchable || CoopPeers.MinDistance(((Component)val).transform.position, p1) > 4000f)
 			{
 				continue;
 			}
@@ -142,8 +136,6 @@ public static class LampSync
 
 	private static Item FindByKey(string key)
 	{
-		//IL_009d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
 		if (_byKey.TryGetValue(key, out var value) && (Object)(object)value != (Object)null)
 		{
 			return value;
@@ -185,8 +177,6 @@ public static class LampSync
 
 	private static string Key(Vector3 p)
 	{
-		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
 		return $"{Mathf.RoundToInt(p.x)}_{Mathf.RoundToInt(p.z)}";
 	}
 

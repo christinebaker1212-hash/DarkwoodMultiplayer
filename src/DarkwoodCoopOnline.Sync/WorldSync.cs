@@ -286,9 +286,6 @@ public static class WorldSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0048: Expected O, but got Unknown
 		if (!_worldIdPatched)
 		{
 			_worldIdPatched = true;
@@ -486,9 +483,6 @@ public static class WorldSync
 
 	public static SlotSummary[] GetSlotSummaries()
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Expected O, but got Unknown
-		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
 		string path = Path.Combine(Application.persistentDataPath, "1_4Save");
 		MainMenu.SaveState val = (MainMenu.SaveState)(((object)ReadProfiles(aes: new SimpleAES(), path: Path.Combine(path, "profs.dat"))) ?? ((object)new MainMenu.SaveState()));
 		SlotSummary[] array = new SlotSummary[5];
@@ -503,10 +497,6 @@ public static class WorldSync
 
 	public static int DeserializeWorld(byte[] blob, string hostIdentity, int explicitSlot = -1)
 	{
-		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0024: Expected O, but got Unknown
-		//IL_02b6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c9: Unknown result type (might be due to invalid IL or missing references)
 		try
 		{
 			blob = Decompress(blob);

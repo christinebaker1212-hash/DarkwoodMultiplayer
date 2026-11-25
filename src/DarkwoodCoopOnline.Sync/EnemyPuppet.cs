@@ -38,11 +38,6 @@ public sealed class EnemyPuppet : MonoBehaviour
 
 	public void Bind(Character c, tk2dSpriteAnimator body)
 	{
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0063: Unknown result type (might be due to invalid IL or missing references)
 		c.init();
 		_body = body;
 		_legs = c.legsAnimator;
@@ -58,10 +53,6 @@ public sealed class EnemyPuppet : MonoBehaviour
 
 	public void SetTarget(Vector3 pos, Quaternion rot, string bodyClip, string legsClip)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0009: Unknown result type (might be due to invalid IL or missing references)
 		_targetPos = pos;
 		_targetRot = rot;
 		_bodyClip = bodyClip;
@@ -70,8 +61,6 @@ public sealed class EnemyPuppet : MonoBehaviour
 
 	public void SnapToTarget()
 	{
-		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
 		((Component)this).transform.position = _targetPos;
 		if ((Object)(object)_body != (Object)null)
 		{
@@ -94,20 +83,6 @@ public sealed class EnemyPuppet : MonoBehaviour
 
 	private void Update()
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0079: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0102: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0108: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0118: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0150: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
 		if (!_init)
 		{
 			return;
@@ -133,10 +108,6 @@ public sealed class EnemyPuppet : MonoBehaviour
 
 	private static void SafePlay(tk2dSpriteAnimator a, string clip, string ownerName, string tag, ref string lastMissingWarned, ref string lastDiagnosedClip, Vector3 pos)
 	{
-		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01cf: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01de: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)a == (Object)null || string.IsNullOrEmpty(clip))
 		{
 			return;

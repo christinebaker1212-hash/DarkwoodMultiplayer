@@ -7,12 +7,6 @@ public static class WorldDiagnostics
 {
 	public static void Dump()
 	{
-		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ee: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0125: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012a: Unknown result type (might be due to invalid IL or missing references)
 		Player instance = Player.Instance;
 		TimestampedLogSource log = Plugin.Log;
 		object obj;
@@ -102,8 +96,6 @@ public static class WorldDiagnostics
 
 	private static void DumpTree(Transform t, int depth)
 	{
-		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c0: Expected O, but got Unknown
 		List<string> list = new List<string>();
 		Component[] components = ((Component)t).GetComponents<Component>();
 		foreach (Component val in components)

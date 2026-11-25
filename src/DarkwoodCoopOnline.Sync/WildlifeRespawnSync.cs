@@ -14,17 +14,6 @@ public static class WildlifeRespawnSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005d: Expected O, but got Unknown
-		//IL_005d: Expected O, but got Unknown
-		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Expected O, but got Unknown
-		//IL_00ba: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c8: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;

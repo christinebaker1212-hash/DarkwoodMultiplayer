@@ -16,8 +16,6 @@ public sealed class ShadowPuppet : MonoBehaviour
 
 	public void Bind(tk2dSpriteAnimator anim)
 	{
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
 		_anim = anim;
 		if ((Object)(object)_anim != (Object)null)
 		{
@@ -29,17 +27,12 @@ public sealed class ShadowPuppet : MonoBehaviour
 
 	public void SetTarget(Vector3 pos, string clip)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
 		_targetPos = pos;
 		_clip = clip;
 	}
 
 	private void Update()
 	{
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
 		if (_init)
 		{
 			((Component)this).transform.position = Vector3.Lerp(((Component)this).transform.position, _targetPos, 8f * Time.deltaTime);

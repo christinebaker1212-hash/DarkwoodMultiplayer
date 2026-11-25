@@ -25,9 +25,6 @@ public static class DownedUI
 
 	private static void DrawCountdown()
 	{
-		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007d: Unknown result type (might be due to invalid IL or missing references)
 		float num = Mathf.Max(0f, 75f - DownedSync.DownedTimer);
 		string text = Mathf.CeilToInt(num).ToString();
 		float num2 = 260f;
@@ -41,14 +38,6 @@ public static class DownedUI
 
 	private static void DrawReviveBar(RemotePlayerPuppet peerPuppet)
 	{
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0036: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
 		Camera val = (((Object)(object)Singleton<CamMain>.Instance != (Object)null) ? ((Component)Singleton<CamMain>.Instance).GetComponent<Camera>() : null);
 		if (!((Object)(object)val == (Object)null))
 		{
@@ -70,22 +59,6 @@ public static class DownedUI
 
 	private static void EnsureStyles()
 	{
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0020: Expected O, but got Unknown
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Expected O, but got Unknown
-		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0065: Expected O, but got Unknown
-		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006d: Expected O, but got Unknown
-		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0099: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00aa: Expected O, but got Unknown
 		if (_countdownStyle == null)
 		{
 			_countdownStyle = new GUIStyle

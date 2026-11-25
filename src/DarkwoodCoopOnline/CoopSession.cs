@@ -1,21 +1,27 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+using System.IO;
+using System.Text;
 using DarkwoodCoopOnline.Net;
 using DarkwoodCoopOnline.Sync;
-using Steamworks;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace DarkwoodCoopOnline;
 
+// One co-op game in progress, from this PC's point of view (up to Proto.MaxPlayers players).
+// The host's world is the reference; every player reports what changes around them, and those
+// reports go to everyone else (RELAY to all), exactly as the two-player version did with "the peer".
+// Packets that are requests to the host go to slot 0 only; answers go back to the asking slot.
 public sealed class CoopSession
 {
-	private readonly ITransport _transport;
+	private readonly CoopConnection _net;
 
 	private readonly NetRole _role;
 
-	private RemotePlayerPuppet _puppet;
+	private readonly Dictionary<int, RemotePlayerPuppet> _puppets = new Dictionary<int, RemotePlayerPuppet>();
+
+	private readonly List<RemotePlayerPuppet> _puppetList = new List<RemotePlayerPuppet>();
 
 	private bool _linked;
 
@@ -43,404 +49,307 @@ public sealed class CoopSession
 
 	private const float ShadowInterval = 0.1f;
 
-	private Queue<byte[]> _pendingSnapshotChunks;
+	// snapshot chunks paced per receiving slot (-1 = everyone)
+	private readonly Dictionary<int, Queue<byte[]>> _paced = new Dictionary<int, Queue<byte[]>>();
 
 	private const int SnapshotChunksPerTick = 4;
 
-	private string _resolvedPeerIdentity;
+	// save requests that arrived before the host's world finished loading
+	private readonly List<(int slot, float since)> _pendingSaveRequests = new List<(int, float)>();
+
+	// newest-per-sender buffers for the high-frequency packets (only the latest one matters)
+	private readonly Dictionary<int, byte[]> _latestState = new Dictionary<int, byte[]>();
+
+	private readonly Dictionary<int, byte[]> _latestBySenderType = new Dictionary<int, byte[]>();
+
+	private readonly List<int> _scratchKeys = new List<int>();
 
 	public bool PeerLeftSignaled { get; private set; }
+
+	public string EndReason { get; private set; }
 
 	public NetRole Role => _role;
 
 	public bool Linked => _linked;
 
-	public RemotePlayerPuppet Puppet => _puppet;
+	public CoopConnection Net => _net;
 
-	public string PeerIdentity => _transport?.PeerIdentity;
+	public int MySlot => _net.MySlot;
 
+	public IReadOnlyList<RemotePlayerPuppet> PuppetList => _puppetList;
+
+	// The remote player closest to us (two-player code that asked for "the peer" now gets this one)
+	public RemotePlayerPuppet Puppet
+	{
+		get
+		{
+			if (_puppetList.Count == 0)
+			{
+				return null;
+			}
+			if (_puppetList.Count == 1 || (Object)(object)Player.Instance == (Object)null)
+			{
+				return _puppetList[0];
+			}
+			return CoopPeers.Nearest(((Component)Player.Instance).transform.position) ?? _puppetList[0];
+		}
+	}
+
+	public string PeerIdentity => ResolvedPeerIdentity;
+
+	// Stable identity of the player whose packet is being handled (or of the first other player)
 	public string ResolvedPeerIdentity
 	{
 		get
 		{
-			string text = _resolvedPeerIdentity;
-			if (text == null)
+			int sender = CoopRuntime.Sender;
+			if (sender >= 0 && sender != MySlot)
 			{
-				ITransport transport = _transport;
-				if (transport == null)
-				{
-					return null;
-				}
-				text = transport.PeerIdentity;
+				return _net.StableIdOf(sender);
 			}
-			return text;
+			for (int i = 0; i < Proto.MaxPlayers; i++)
+			{
+				if (i != MySlot && _net.Roster[i] != null)
+				{
+					return _net.Roster[i].StableId;
+				}
+			}
+			return null;
 		}
 	}
+
+	public CoopSession(CoopConnection net, NetRole role)
+	{
+		_net = net;
+		_role = role;
+	}
+
+	public RemotePlayerPuppet PuppetOf(int slot)
+	{
+		if (!_puppets.TryGetValue(slot, out var value))
+		{
+			return null;
+		}
+		return value;
+	}
+
+	public string PeerName(int slot)
+	{
+		return _net.NameOf(slot);
+	}
+
+	public int PlayersInGame
+	{
+		get
+		{
+			int num = 1;
+			for (int i = 0; i < Proto.MaxPlayers; i++)
+			{
+				if (i != MySlot && _net.Roster[i] != null && _net.Roster[i].InGame)
+				{
+					num++;
+				}
+			}
+			return num;
+		}
+	}
+
+	// ---- sending ----
 
 	public void SendReliable(byte[] data)
 	{
-		if (_transport != null && _transport.Connected)
+		_net.SendGame(-1, data, reliable: true);
+	}
+
+	public void Broadcast(byte[] data, bool reliable)
+	{
+		_net.SendGame(-1, data, reliable);
+	}
+
+	public void SendTo(int slot, byte[] data, bool reliable = true)
+	{
+		_net.SendGame(slot, data, reliable);
+	}
+
+	public void SendToHost(byte[] data)
+	{
+		_net.SendGame(0, data, reliable: true);
+	}
+
+	// Reply to whoever sent the packet being handled
+	public void Reply(byte[] data)
+	{
+		if (CoopRuntime.Sender >= 0)
 		{
-			_transport.Send(data, reliable: true);
+			_net.SendGame(CoopRuntime.Sender, data, reliable: true);
 		}
 	}
 
-	public void EnqueuePacedChunks(IEnumerable<byte[]> packets)
+	public void EnqueuePacedChunks(IEnumerable<byte[]> packets, int target = -1)
 	{
-		if (_pendingSnapshotChunks == null)
+		if (!_paced.TryGetValue(target, out var value))
 		{
-			_pendingSnapshotChunks = new Queue<byte[]>();
+			value = (_paced[target] = new Queue<byte[]>());
 		}
 		foreach (byte[] packet in packets)
 		{
-			_pendingSnapshotChunks.Enqueue(packet);
+			value.Enqueue(packet);
 		}
-	}
-
-	public CoopSession(ITransport transport, NetRole role)
-	{
-		_transport = transport;
-		_role = role;
 	}
 
 	public bool Start()
 	{
 		CoopRuntime.SetSession(this);
-		try
-		{
-			_transport.Start(_role);
-		}
-		catch (Exception ex)
-		{
-			Plugin.Log.LogError($"[Session] falha ao iniciar o transporte ({_role}): {ex.GetType().Name}: {ex.Message} - " + "se for LAN testando na MESMA máquina, confirme que HOST e CLIENTE não estão usando a MESMA porta (LAN.Port).");
-			CoopRuntime.SetSession(null);
-			return false;
-		}
 		if (_role == NetRole.Client)
 		{
-			_transport.Send(PacketWriter.Begin(PacketType.Hello).Byte(1).Str(StableIdentity.Resolve())
-				.Finish(), reliable: true);
+			_net.Hello();
+			_linked = true;
+			LobbySync.MarkPeerConnected();
+			SendToHost(PacketWriter.Begin(PacketType.SnapshotRequest).Finish());
 		}
-		Plugin.Log.LogInfo($"[Session] iniciada como {_role}");
+		// players already in the world (a client joining a game in progress)
+		for (int i = 0; i < Proto.MaxPlayers; i++)
+		{
+			if (i != MySlot && _net.Roster[i] != null && _net.Roster[i].InGame)
+			{
+				EnsurePuppet(i);
+			}
+		}
+		Plugin.Log.LogInfo($"[Session] started as {_role} (slot {MySlot}, room \"{_net.RoomName}\", {_net.TransportName}).");
 		return true;
 	}
 
+	// ---- per frame ----
+
 	public void Update()
 	{
-		//IL_01e0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0204: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01f5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0209: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02e2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02e4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0227: Unknown result type (might be due to invalid IL or missing references)
-		//IL_023c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0251: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0266: Unknown result type (might be due to invalid IL or missing references)
-		//IL_05f2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_05f7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0616: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0607: Unknown result type (might be due to invalid IL or missing references)
-		//IL_061b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0627: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0629: Unknown result type (might be due to invalid IL or missing references)
-		//IL_073d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0742: Unknown result type (might be due to invalid IL or missing references)
-		//IL_065c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_065e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0761: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0752: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0766: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0772: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0774: Unknown result type (might be due to invalid IL or missing references)
-		//IL_079e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_07a0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_07ca: Unknown result type (might be due to invalid IL or missing references)
-		//IL_07cc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_07f6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_07f8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0822: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0824: Unknown result type (might be due to invalid IL or missing references)
-		//IL_084e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0850: Unknown result type (might be due to invalid IL or missing references)
-		//IL_087a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_087c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_08a6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_08a8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_08d2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_08d4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_095c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_095e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0988: Unknown result type (might be due to invalid IL or missing references)
-		//IL_098a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_09b4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_09b6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0a08: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0a0a: Unknown result type (might be due to invalid IL or missing references)
-		if (_transport == null || !_transport.Connected)
+		if (_net == null)
 		{
 			return;
 		}
-		_transport.Pump();
+		_net.Tick(Time.unscaledDeltaTime);
 		PerfDiagnostics.Begin("Receive");
-		byte[] array = null;
-		byte[] array2 = null;
-		byte[] array3 = null;
-		byte[] array4 = null;
-		byte[] data;
-		while (_transport.TryReceive(out data))
-		{
-			if (data.Length != 0)
-			{
-				switch ((PacketType)data[0])
-				{
-				case PacketType.PlayerState:
-					array = data;
-					break;
-				case PacketType.EnemyDelta:
-					array2 = data;
-					break;
-				case PacketType.FurnitureDelta:
-					array3 = data;
-					break;
-				case PacketType.DoorSwing:
-					array4 = data;
-					break;
-				default:
-					Handle(data);
-					break;
-				}
-			}
-		}
-		if (array != null)
-		{
-			Handle(array);
-		}
-		if (array2 != null)
-		{
-			Handle(array2);
-		}
-		if (array3 != null)
-		{
-			Handle(array3);
-		}
-		if (array4 != null)
-		{
-			Handle(array4);
-		}
+		ReceiveAll();
 		PerfDiagnostics.End();
-		if (_pendingSnapshotChunks != null)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				if (_pendingSnapshotChunks.Count <= 0)
-				{
-					break;
-				}
-				_transport.Send(_pendingSnapshotChunks.Dequeue(), reliable: true);
-			}
-			if (_pendingSnapshotChunks.Count == 0)
-			{
-				_pendingSnapshotChunks = null;
-			}
-		}
+		FlushPaced();
+		TickPendingSaveRequests();
 		if (!_linked)
 		{
 			return;
 		}
+		Vector3 local = (((Object)(object)Player.Instance != (Object)null) ? ((Component)Player.Instance).transform.position : Vector3.zero);
 		_sendTimer += Time.deltaTime;
-		if (_sendTimer >= 0.05f)
+		if (_sendTimer >= SendInterval)
 		{
 			_sendTimer = 0f;
 			PerfDiagnostics.Begin("PlayerState.Build");
-			byte[] array5 = PlayerSync.BuildLocalState();
-			if (array5 != null)
+			byte[] array = PlayerSync.BuildLocalState();
+			if (array != null)
 			{
-				_transport.Send(array5, reliable: false);
+				_net.SendState(array);
 			}
 			PerfDiagnostics.End();
 		}
-		byte[] array6 = VoiceSync.PollOutgoing();
-		if (array6 != null)
+		byte[] array2 = VoiceSync.PollOutgoing();
+		if (array2 != null)
 		{
-			_transport.Send(array6, reliable: false);
+			Broadcast(array2, reliable: false);
 		}
-		VoiceSync.Tick(_puppet);
+		VoiceSync.Tick(_puppetList);
 		_enemyTimer += Time.deltaTime;
-		if (_enemyTimer >= 0.05f && (Object)(object)Player.Instance != (Object)null)
+		if (_enemyTimer >= EnemyInterval && (Object)(object)Player.Instance != (Object)null)
 		{
 			_enemyTimer = 0f;
 			PerfDiagnostics.Begin("Enemy.Build");
-			Vector3 position = ((Component)Player.Instance).transform.position;
-			Vector3 p = (((Object)(object)_puppet != (Object)null) ? ((Component)_puppet).transform.position : position);
-			if ((Object)(object)_puppet != (Object)null)
+			List<Vector3> list = CoopPeers.Positions();
+			if (list.Count > 0)
 			{
-				LocationOwnership.WakeNearbyInactiveTick(((Component)_puppet).transform.position);
-				EnemySync.WakeOwnedNearPeer(((Component)_puppet).transform.position);
-				EnemySync.WakePuppetsNearPeer(((Component)_puppet).transform.position);
-				NightEventSync.SetPeerPosition(((Component)_puppet).transform.position);
-				if (DownedSync.PeerReallyDead)
+				LocationOwnership.WakeNearbyInactiveTick(list);
+				EnemySync.WakeOwnedNearPeers(list);
+				EnemySync.WakePuppetsNearPeers(list);
+				NightEventSync.SetPeerPosition(Puppet?.transform.position ?? local);
+				Transform transform = ((Component)Player.Instance).transform;
+				foreach (RemotePlayerPuppet puppet in _puppetList)
 				{
-					EnemySync.ReleaseAggroFromPuppet(((Component)_puppet).transform);
+					if ((Object)(object)puppet == (Object)null || !puppet.HasState)
+					{
+						continue;
+					}
+					if (DownedSync.IsPeerReallyDead(puppet.Slot) || DownedSync.IsPeerDowned(puppet.Slot))
+					{
+						EnemySync.ReleaseAggroFromPuppet(((Component)puppet).transform);
+					}
+					else
+					{
+						EnemySync.CheckAggroRedirect(transform, ((Component)puppet).transform);
+					}
 				}
-				else if (!DownedSync.PeerDowned)
-				{
-					EnemySync.CheckAggroRedirect(((Component)Player.Instance).transform, ((Component)_puppet).transform);
-					EnemySync.CheckAoeDamageToPeer(((Component)_puppet).transform);
-					EnemySync.SyncCombatTensionForPeer(((Component)_puppet).transform);
-				}
-				else
-				{
-					EnemySync.ReleaseAggroFromPuppet(((Component)_puppet).transform);
-				}
+				EnemySync.CheckAoeDamageToPeers(_puppetList);
+				EnemySync.SyncCombatTensionForPeers(_puppetList);
 			}
-			_transport.Send(EnemySync.BuildDelta(position, p), reliable: false);
-			byte[] array7 = EnemySync.BuildDeaths();
-			if (array7 != null)
-			{
-				_transport.Send(array7, reliable: true);
-			}
-			byte[] array8 = EnemySync.BuildRemovals();
-			if (array8 != null)
-			{
-				_transport.Send(array8, reliable: true);
-			}
-			byte[] array9 = EnemySync.BuildSpawns();
-			if (array9 != null)
-			{
-				_transport.Send(array9, reliable: true);
-			}
-			byte[] array10 = EnemyHitAnimSync.PollOutgoing();
-			if (array10 != null)
-			{
-				_transport.Send(array10, reliable: true);
-			}
+			Broadcast(EnemySync.BuildDelta(local, local), reliable: false);
+			SendIfAny(EnemySync.BuildDeaths(), reliable: true);
+			SendIfAny(EnemySync.BuildRemovals(), reliable: true);
+			SendIfAny(EnemySync.BuildSpawns(), reliable: true);
+			SendIfAny(EnemyHitAnimSync.PollOutgoing(), reliable: true);
 			PerfDiagnostics.End();
 		}
 		EnemySync.PruneLocalOrphans();
 		NightEventSync.Tick();
-		byte[] array11 = CorpseSync.PollFoundCorpses();
-		if (array11 != null)
-		{
-			_transport.Send(array11, reliable: true);
-		}
-		byte[] array12 = FlareSync.PollSettled();
-		if (array12 != null)
-		{
-			_transport.Send(array12, reliable: true);
-		}
-		byte[] array13 = ThrownItemSync.PollSettled();
-		if (array13 != null)
-		{
-			_transport.Send(array13, reliable: true);
-		}
-		byte[] array14 = CharacterMessageSync.PollNew();
-		if (array14 != null)
-		{
-			_transport.Send(array14, reliable: true);
-		}
-		byte[] array15 = InSightSync.PollNew();
-		if (array15 != null)
-		{
-			_transport.Send(array15, reliable: true);
-		}
+		SendIfAny(CorpseSync.PollFoundCorpses(), reliable: true);
+		SendIfAny(FlareSync.PollSettled(), reliable: true);
+		SendIfAny(ThrownItemSync.PollSettled(), reliable: true);
+		SendIfAny(CharacterMessageSync.PollNew(), reliable: true);
+		SendIfAny(InSightSync.PollNew(), reliable: true);
 		_shadowTimer += Time.deltaTime;
-		if (_shadowTimer >= 0.1f)
+		if (_shadowTimer >= ShadowInterval)
 		{
 			_shadowTimer = 0f;
 			PerfDiagnostics.Begin("Shadow.Build");
-			byte[] array16 = ShadowSync.BuildDelta();
-			if (array16 != null)
-			{
-				_transport.Send(array16, reliable: false);
-			}
-			byte[] array17 = ShadowSync.BuildDeaths();
-			if (array17 != null)
-			{
-				_transport.Send(array17, reliable: true);
-			}
-			byte[] array18 = ShadowSync.BuildSpawns();
-			if (array18 != null)
-			{
-				_transport.Send(array18, reliable: true);
-			}
+			SendIfAny(ShadowSync.BuildDelta(), reliable: false);
+			SendIfAny(ShadowSync.BuildDeaths(), reliable: true);
+			SendIfAny(ShadowSync.BuildSpawns(), reliable: true);
 			PerfDiagnostics.End();
 		}
 		LobbySync.Tick();
 		PerfDiagnostics.Begin("Downed.Tick");
-		DownedSync.Tick(Time.deltaTime, _puppet);
-		_puppet?.SetDownedVisual(DownedSync.PeerDowned, DownedSync.Downed);
+		DownedSync.Tick(Time.deltaTime);
+		foreach (RemotePlayerPuppet puppet2 in _puppetList)
+		{
+			puppet2?.SetDownedVisual(DownedSync.IsPeerDowned(puppet2.Slot), DownedSync.Downed);
+		}
 		PerfDiagnostics.End();
-		byte[] array19 = EnemySync.BuildHitRequests();
-		if (array19 != null)
-		{
-			_transport.Send(array19, reliable: true);
-		}
-		byte[] array20 = EnemySync.BuildBehaviorRequests();
-		if (array20 != null)
-		{
-			_transport.Send(array20, reliable: true);
-		}
+		SendIfAny(EnemySync.BuildHitRequests(), reliable: true);
+		SendIfAny(EnemySync.BuildBehaviorRequests(), reliable: true);
 		PerfDiagnostics.Begin("Clock.Poll");
-		byte[] array21 = ClockSync.PollLocalResume();
-		if (array21 != null)
-		{
-			_transport.Send(array21, reliable: true);
-		}
+		SendIfAny(ClockSync.PollLocalResume(), reliable: true);
 		if (_role == NetRole.Host)
 		{
-			byte[] array22 = ClockSync.PollDayAdvance();
-			if (array22 != null)
-			{
-				_transport.Send(array22, reliable: true);
-			}
+			SendIfAny(ClockSync.PollDayAdvance(), reliable: true);
 		}
 		PerfDiagnostics.End();
 		PerfDiagnostics.Begin("Pause.Poll");
-		byte[] array23 = PauseSync.PollLocalChange();
-		if (array23 != null)
-		{
-			_transport.Send(array23, reliable: true);
-		}
+		SendIfAny(PauseSync.PollLocalChange(), reliable: true);
 		PerfDiagnostics.End();
 		if (_role == NetRole.Host)
 		{
 			_clockTimer += Time.deltaTime;
-			if (_clockTimer >= 5f)
+			if (_clockTimer >= ClockInterval)
 			{
 				_clockTimer = 0f;
-				byte[] array24 = ClockSync.BuildHeartbeat();
-				if (array24 != null)
-				{
-					_transport.Send(array24, reliable: true);
-				}
-				byte[] array25 = RainSync.BuildHeartbeat();
-				if (array25 != null)
-				{
-					_transport.Send(array25, reliable: true);
-				}
+				SendIfAny(ClockSync.BuildHeartbeat(), reliable: true);
+				SendIfAny(RainSync.BuildHeartbeat(), reliable: true);
 			}
 		}
 		_doorTimer2 += Time.deltaTime;
-		if (_doorTimer2 >= 0.05f && (Object)(object)Player.Instance != (Object)null)
+		if (_doorTimer2 >= FurnInterval && (Object)(object)Player.Instance != (Object)null)
 		{
 			_doorTimer2 = 0f;
-			Vector3 position2 = ((Component)Player.Instance).transform.position;
-			Vector3 p2 = (((Object)(object)_puppet != (Object)null) ? ((Component)_puppet).transform.position : position2);
 			PerfDiagnostics.Begin("Furniture.Poll");
-			byte[] array26 = FurnitureSync.PollDrags(position2, p2, _role == NetRole.Host);
-			if (array26 != null)
-			{
-				_transport.Send(array26, reliable: false);
-			}
+			SendIfAny(FurnitureSync.PollDrags(local, local, _role == NetRole.Host), reliable: false);
 			PerfDiagnostics.End();
 			PerfDiagnostics.Begin("DoorSwing.Poll");
-			byte[] array27 = DoorSwingSync.PollSwings(position2, p2);
-			if (array27 != null)
-			{
-				_transport.Send(array27, reliable: false);
-			}
+			SendIfAny(DoorSwingSync.PollSwings(local, local), reliable: false);
 			PerfDiagnostics.End();
 		}
 		PerfDiagnostics.Begin("Furniture.Tick");
@@ -450,247 +359,388 @@ public sealed class CoopSession
 		DoorSwingSync.Tick();
 		PerfDiagnostics.End();
 		PerfDiagnostics.Begin("Drop.PollDestroys");
-		byte[] array28 = DropSync.PollDestroys();
-		if (array28 != null)
-		{
-			_transport.Send(array28, reliable: true);
-		}
+		SendIfAny(DropSync.PollDestroys(), reliable: true);
 		PerfDiagnostics.End();
 		PerfDiagnostics.Begin("Trap.PollDestroys");
-		byte[] array29 = TrapSync.PollDestroys();
-		if (array29 != null)
-		{
-			_transport.Send(array29, reliable: true);
-		}
+		SendIfAny(TrapSync.PollDestroys(), reliable: true);
 		PerfDiagnostics.End();
 		_doorTimer += Time.deltaTime;
-		if (_doorTimer >= 0.1f && (Object)(object)Player.Instance != (Object)null)
+		if (_doorTimer >= DoorInterval && (Object)(object)Player.Instance != (Object)null)
 		{
 			_doorTimer = 0f;
-			Vector3 position3 = ((Component)Player.Instance).transform.position;
-			Vector3 p3 = (((Object)(object)_puppet != (Object)null) ? ((Component)_puppet).transform.position : position3);
-			PerfDiagnostics.Begin("Door.Poll");
-			byte[] array30 = PropSync.PollChanges(position3, p3);
-			if (array30 != null)
+			PollWorld(local);
+		}
+		SendIfAny(CharacterSaveSync.PollUpload(Time.deltaTime, _role == NetRole.Client), reliable: true, toHostOnly: _role == NetRole.Client);
+	}
+
+	private void PollWorld(Vector3 p)
+	{
+		PerfDiagnostics.Begin("Door.Poll");
+		SendIfAny(PropSync.PollChanges(p, p), reliable: true);
+		PerfDiagnostics.End();
+		PerfDiagnostics.Begin("Lamp.Poll");
+		SendIfAny(LampSync.PollChanges(p, p), reliable: true);
+		PerfDiagnostics.End();
+		PerfDiagnostics.Begin("Trap.Poll");
+		SendIfAny(TrapSync.PollChanges(p, p), reliable: true);
+		PerfDiagnostics.End();
+		PerfDiagnostics.Begin("Window.Poll");
+		SendIfAny(WindowSync.PollChanges(p, p), reliable: true);
+		PerfDiagnostics.End();
+		PerfDiagnostics.Begin("DoorBarricade.Poll");
+		SendIfAny(DoorBarricadeSync.PollChanges(p, p), reliable: true);
+		PerfDiagnostics.End();
+		PerfDiagnostics.Begin("Generator.Poll");
+		SendIfAny(GeneratorSync.PollChanges(p, p), reliable: true);
+		PerfDiagnostics.End();
+		PerfDiagnostics.Begin("Saw.Poll");
+		SendIfAny(SawSync.PollChanges(p, p), reliable: true);
+		PerfDiagnostics.End();
+		PerfDiagnostics.Begin("Drop.PollCreates");
+		SendIfAny(DropSync.PollCreates(p, p), reliable: true);
+		PerfDiagnostics.End();
+		PerfDiagnostics.Begin("Container.Poll");
+		List<byte[]> list = ContainerSync.PollChanges(p, p, _role == NetRole.Host);
+		if (list != null)
+		{
+			foreach (byte[] item in list)
 			{
-				_transport.Send(array30, reliable: true);
+				SendReliable(item);
 			}
-			PerfDiagnostics.End();
-			PerfDiagnostics.Begin("Lamp.Poll");
-			byte[] array31 = LampSync.PollChanges(position3, p3);
-			if (array31 != null)
+		}
+		PerfDiagnostics.End();
+		PerfDiagnostics.Begin("KeyItem.Poll");
+		SendIfAny(KeyItemSync.PollLocalPickups(), reliable: true);
+		PerfDiagnostics.End();
+		PerfDiagnostics.Begin("Lock.Poll");
+		SendIfAny(LockSync.PollChanges(p, p), reliable: true);
+		PerfDiagnostics.End();
+		PerfDiagnostics.Begin("Constructible.Poll");
+		SendIfAny(ConstructibleSync.PollChanges(p, p), reliable: true);
+		PerfDiagnostics.End();
+		PerfDiagnostics.Begin("Workbench.Poll");
+		SendIfAny(WorkbenchSync.PollChanges(p, p), reliable: true);
+		PerfDiagnostics.End();
+		PerfDiagnostics.Begin("PlayerBurn.Poll");
+		SendIfAny(PlayerBurnVisualSync.PollChanges(), reliable: true);
+		PerfDiagnostics.End();
+		PerfDiagnostics.Begin("DialogueState.Poll");
+		SendIfAny(DialogueStateSync.PollChanges(p, p), reliable: true);
+		PerfDiagnostics.End();
+		PerfDiagnostics.Begin("NpcState.Poll");
+		SendIfAny(NpcStateSync.PollChanges(), reliable: true);
+		PerfDiagnostics.End();
+	}
+
+	private void SendIfAny(byte[] data, bool reliable, bool toHostOnly = false)
+	{
+		if (data != null && data.Length != 0)
+		{
+			_net.SendGame(toHostOnly ? 0 : (-1), data, reliable);
+		}
+	}
+
+	private void FlushPaced()
+	{
+		if (_paced.Count == 0)
+		{
+			return;
+		}
+		_scratchKeys.Clear();
+		_scratchKeys.AddRange(_paced.Keys);
+		foreach (int scratchKey in _scratchKeys)
+		{
+			Queue<byte[]> queue = _paced[scratchKey];
+			for (int i = 0; i < SnapshotChunksPerTick; i++)
 			{
-				_transport.Send(array31, reliable: true);
-			}
-			PerfDiagnostics.End();
-			PerfDiagnostics.Begin("Trap.Poll");
-			byte[] array32 = TrapSync.PollChanges(position3, p3);
-			if (array32 != null)
-			{
-				_transport.Send(array32, reliable: true);
-			}
-			PerfDiagnostics.End();
-			PerfDiagnostics.Begin("Window.Poll");
-			byte[] array33 = WindowSync.PollChanges(position3, p3);
-			if (array33 != null)
-			{
-				_transport.Send(array33, reliable: true);
-			}
-			PerfDiagnostics.End();
-			PerfDiagnostics.Begin("DoorBarricade.Poll");
-			byte[] array34 = DoorBarricadeSync.PollChanges(position3, p3);
-			if (array34 != null)
-			{
-				_transport.Send(array34, reliable: true);
-			}
-			PerfDiagnostics.End();
-			PerfDiagnostics.Begin("Generator.Poll");
-			byte[] array35 = GeneratorSync.PollChanges(position3, p3);
-			if (array35 != null)
-			{
-				_transport.Send(array35, reliable: true);
-			}
-			PerfDiagnostics.End();
-			PerfDiagnostics.Begin("Saw.Poll");
-			byte[] array36 = SawSync.PollChanges(position3, p3);
-			if (array36 != null)
-			{
-				_transport.Send(array36, reliable: true);
-			}
-			PerfDiagnostics.End();
-			PerfDiagnostics.Begin("Drop.PollCreates");
-			byte[] array37 = DropSync.PollCreates(position3, p3);
-			if (array37 != null)
-			{
-				_transport.Send(array37, reliable: true);
-			}
-			PerfDiagnostics.End();
-			PerfDiagnostics.Begin("Container.Poll");
-			List<byte[]> list = ContainerSync.PollChanges(position3, p3, _role == NetRole.Host);
-			if (list != null)
-			{
-				foreach (byte[] item in list)
+				if (queue.Count <= 0)
 				{
-					_transport.Send(item, reliable: true);
+					break;
 				}
+				_net.SendGame(scratchKey, queue.Dequeue(), reliable: true);
 			}
-			PerfDiagnostics.End();
-			PerfDiagnostics.Begin("KeyItem.Poll");
-			byte[] array38 = KeyItemSync.PollLocalPickups();
-			if (array38 != null)
+			if (queue.Count == 0)
 			{
-				_transport.Send(array38, reliable: true);
+				_paced.Remove(scratchKey);
 			}
-			PerfDiagnostics.End();
-			PerfDiagnostics.Begin("Lock.Poll");
-			byte[] array39 = LockSync.PollChanges(position3, p3);
-			if (array39 != null)
-			{
-				_transport.Send(array39, reliable: true);
-			}
-			PerfDiagnostics.End();
-			PerfDiagnostics.Begin("Constructible.Poll");
-			byte[] array40 = ConstructibleSync.PollChanges(position3, p3);
-			if (array40 != null)
-			{
-				_transport.Send(array40, reliable: true);
-			}
-			PerfDiagnostics.End();
-			PerfDiagnostics.Begin("Workbench.Poll");
-			byte[] array41 = WorkbenchSync.PollChanges(position3, p3);
-			if (array41 != null)
-			{
-				_transport.Send(array41, reliable: true);
-			}
-			PerfDiagnostics.End();
-			PerfDiagnostics.Begin("PlayerBurn.Poll");
-			byte[] array42 = PlayerBurnVisualSync.PollChanges();
-			if (array42 != null)
-			{
-				_transport.Send(array42, reliable: true);
-			}
-			PerfDiagnostics.End();
-			PerfDiagnostics.Begin("DialogueState.Poll");
-			byte[] array43 = DialogueStateSync.PollChanges(position3, p3);
-			if (array43 != null)
-			{
-				_transport.Send(array43, reliable: true);
-			}
-			PerfDiagnostics.End();
-			PerfDiagnostics.Begin("NpcState.Poll");
-			byte[] array44 = NpcStateSync.PollChanges();
-			if (array44 != null)
-			{
-				_transport.Send(array44, reliable: true);
-			}
-			PerfDiagnostics.End();
-		}
-		byte[] array45 = CharacterSaveSync.PollUpload(Time.deltaTime, _role == NetRole.Client);
-		if (array45 != null)
-		{
-			_transport.Send(array45, reliable: true);
 		}
 	}
 
-	private void EnsurePuppet()
+	// ---- receiving ----
+
+	private static bool IsLatestOnly(PacketType t)
 	{
-		if ((Object)(object)_puppet == (Object)null && (Object)(object)Player.Instance != (Object)null)
+		if (t != PacketType.EnemyDelta && t != PacketType.FurnitureDelta)
 		{
-			_puppet = RemotePlayerPuppet.Create();
+			return t == PacketType.DoorSwing;
 		}
+		return true;
 	}
 
-	private void LogSessionIdentities()
+	private void ReceiveAll()
 	{
-		string myName = "?";
-		string myId = "?";
-		string peerName = "?";
-		string peerId = _transport?.PeerIdentity ?? "?";
-		if (SteamAvailability.Available)
+		CoopConnection.Ev ev;
+		while (_net.Poll(out ev))
 		{
-			ReadSteamIdentities(ref myName, ref myId, ref peerName, ref peerId);
-		}
-		Plugin.Log.LogInfo($"[Session] EU='{myName}' (steamid={myId}) papel={_role} <-> PEER='{peerName}' (steamid={peerId}) " + "| identidadeEstávelMinha='" + StableIdentity.Resolve() + "' identidadeEstávelPeer='" + ResolvedPeerIdentity + "'");
-	}
-
-	[MethodImpl(MethodImplOptions.NoInlining)]
-	private static void ReadSteamIdentities(ref string myName, ref string myId, ref string peerName, ref string peerId)
-	{
-		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
-		if (SteamManager.Initialized)
-		{
-			myName = SteamFriends.GetPersonaName();
-			myId = SteamUser.GetSteamID().m_SteamID.ToString();
-			if (peerId.StartsWith("steam:") && ulong.TryParse(peerId.Substring(6), out var result))
+			switch (ev.Kind)
 			{
-				peerName = SteamFriends.GetFriendPersonaName(new CSteamID(result));
-				peerId = result.ToString();
+			case CoopConnection.EvKind.State:
+				_latestState[ev.Slot] = ev.Payload;
+				break;
+			case CoopConnection.EvKind.Game:
+				if (ev.Payload.Length != 0)
+				{
+					if (IsLatestOnly((PacketType)ev.Payload[0]))
+					{
+						_latestBySenderType[(ev.Slot << 8) | ev.Payload[0]] = ev.Payload;
+					}
+					else
+					{
+						Dispatch(ev.Slot, ev.Payload);
+					}
+				}
+				break;
+			case CoopConnection.EvKind.PeerJoined:
+				Plugin.Log.LogInfo($"[Session] '{_net.NameOf(ev.Slot)}' (slot {ev.Slot}) connected - loading the world.");
+				CoopNotice.Show(_net.NameOf(ev.Slot) + " is joining...");
+				break;
+			case CoopConnection.EvKind.PeerInGame:
+				OnPeerInGame(ev.Slot);
+				break;
+			case CoopConnection.EvKind.PeerLeft:
+				OnPeerLeft(ev.Slot, _net.NameOf(ev.Slot));
+				break;
+			case CoopConnection.EvKind.SaveRequest:
+				_pendingSaveRequests.Add((ev.Slot, Time.unscaledTime));
+				break;
+			case CoopConnection.EvKind.Disconnected:
+				EndReason = _net.DisconnectText ?? "The host closed the game.";
+				Plugin.Log.LogWarning("[Session] " + EndReason);
+				PeerLeftSignaled = true;
+				break;
+			}
+		}
+		if (_latestState.Count > 0)
+		{
+			foreach (KeyValuePair<int, byte[]> item in _latestState)
+			{
+				Dispatch(item.Key, item.Value);
+			}
+			_latestState.Clear();
+		}
+		if (_latestBySenderType.Count > 0)
+		{
+			foreach (KeyValuePair<int, byte[]> item2 in _latestBySenderType)
+			{
+				Dispatch(item2.Key >> 8, item2.Value);
+			}
+			_latestBySenderType.Clear();
+		}
+	}
+
+	private void Dispatch(int sender, byte[] data)
+	{
+		if (sender == MySlot)
+		{
+			return;
+		}
+		CoopRuntime.Sender = sender;
+		try
+		{
+			Handle(data, sender);
+		}
+		catch (Exception ex)
+		{
+			Plugin.Log.LogWarning($"[Session] error handling {(PacketType)data[0]} from slot {sender}: {ex.GetType().Name}: {ex.Message}");
+		}
+		finally
+		{
+			CoopRuntime.Sender = -1;
+		}
+	}
+
+	private RemotePlayerPuppet EnsurePuppet(int slot)
+	{
+		if (slot == MySlot || slot < 0)
+		{
+			return null;
+		}
+		if (_puppets.TryGetValue(slot, out var value) && (Object)(object)value != (Object)null)
+		{
+			return value;
+		}
+		if ((Object)(object)Player.Instance == (Object)null)
+		{
+			return null;
+		}
+		value = RemotePlayerPuppet.Create();
+		if ((Object)(object)value == (Object)null)
+		{
+			return null;
+		}
+		value.Slot = slot;
+		value.PeerName = _net.NameOf(slot) ?? ("Player " + (slot + 1));
+		_puppets[slot] = value;
+		RebuildPuppetList();
+		return value;
+	}
+
+	private void RebuildPuppetList()
+	{
+		_puppetList.Clear();
+		foreach (KeyValuePair<int, RemotePlayerPuppet> puppet in _puppets)
+		{
+			if ((Object)(object)puppet.Value != (Object)null)
+			{
+				_puppetList.Add(puppet.Value);
 			}
 		}
 	}
 
-	private void Handle(byte[] data)
+	private void OnPeerInGame(int slot)
+	{
+		string text = _net.NameOf(slot) ?? ("Player " + (slot + 1));
+		Plugin.Log.LogInfo($"[Session] '{text}' (slot {slot}) is in the world ({PlayersInGame}/{Proto.MaxPlayers}).");
+		CoopNotice.Show(text + " joined the game");
+		EnsurePuppet(slot);
+		_linked = true;
+		LobbySync.MarkPeerConnected();
+		if (_role == NetRole.Host)
+		{
+			SendTo(slot, CharacterSaveSync.BuildDownloadFor(_net.StableIdOf(slot)));
+			MorningRitualSync.CatchUpExistingNpcs();
+			if (LobbySync.Started)
+			{
+				// joining a game that's already going: no lobby for them, and bring their world up to date
+				SendTo(slot, PacketWriter.Begin(PacketType.LobbyStart).Finish());
+				LobbySync.ReconcileAll();
+			}
+			HostFlow.OnPlayerCountChanged();
+		}
+	}
+
+	private void OnPeerLeft(int slot, string name)
+	{
+		name = name ?? ("Player " + (slot + 1));
+		if (_puppets.TryGetValue(slot, out var value))
+		{
+			if ((Object)(object)value != (Object)null)
+			{
+				EnemySync.ReleaseAggroFromPuppet(((Component)value).transform);
+				Object.Destroy((Object)(object)((Component)value).gameObject);
+			}
+			_puppets.Remove(slot);
+			RebuildPuppetList();
+		}
+		DownedSync.OnPeerLeft(slot);
+		PauseSync.OnPeerLeft(slot);
+		LobbySync.OnPeerLeft(slot);
+		VoiceSync.OnPeerLeft(slot);
+		LocationOwnership.OnPeerLeft(slot);
+		Plugin.Log.LogInfo($"[Session] '{name}' (slot {slot}) left.");
+		if (_role == NetRole.Client && slot == 0)
+		{
+			EndReason = "The host left the game.";
+			PeerLeftSignaled = true;
+			return;
+		}
+		CoopNotice.Show(name + " left the game");
+		if (_role == NetRole.Host)
+		{
+			HostFlow.OnPlayerCountChanged();
+			if (_puppets.Count == 0 && PlayersInGame <= 1)
+			{
+				// nobody left: back to playing alone until someone joins again
+				_linked = false;
+				Plugin.Log.LogInfo("[Session] everyone left - playing alone, still hosting.");
+			}
+		}
+	}
+
+	// The host's world, for a player at the main menu (in the same form LAN mode always used:
+	// u32 identity length, identity, world blob)
+	private void TickPendingSaveRequests()
+	{
+		if (_pendingSaveRequests.Count == 0 || _role != NetRole.Host)
+		{
+			return;
+		}
+		for (int num = _pendingSaveRequests.Count - 1; num >= 0; num--)
+		{
+			(int slot, float since) tuple = _pendingSaveRequests[num];
+			if (!LanSaveTransfer.HostWorldReady && Time.unscaledTime - tuple.since < 60f)
+			{
+				continue;
+			}
+			_pendingSaveRequests.RemoveAt(num);
+			try
+			{
+				byte[] array = WorldSync.SerializeWorld();
+				byte[] bytes = Encoding.UTF8.GetBytes(StableIdentity.Resolve());
+				using MemoryStream memoryStream = new MemoryStream();
+				using BinaryWriter binaryWriter = new BinaryWriter(memoryStream);
+				binaryWriter.Write(bytes.Length);
+				binaryWriter.Write(bytes);
+				binaryWriter.Write(array);
+				binaryWriter.Flush();
+				_net.Server.SendSave(tuple.slot, memoryStream.ToArray());
+				Plugin.Log.LogInfo($"[Session] sent the world save ({memoryStream.Length} bytes) to '{_net.NameOf(tuple.slot)}'.");
+			}
+			catch (Exception ex)
+			{
+				Plugin.Log.LogError("[Session] could not build the world save: " + ex);
+			}
+		}
+	}
+
+	private void Handle(byte[] data, int from)
 	{
 		PacketReader packetReader = new PacketReader(data);
 		switch (packetReader.Type)
 		{
 		case PacketType.PeerLeaving:
-			Plugin.Log.LogInfo("[Session] peer avisou que voltou pro menu principal - encerrando minha sessão localmente.");
-			PeerLeftSignaled = true;
+			OnPeerLeft(from, _net.NameOf(from));
 			break;
 		case PacketType.Hello:
+			break;
+		case PacketType.PlayerState:
 		{
-			NetRole netRole = (NetRole)packetReader.Byte();
-			string text = packetReader.Str();
-			_resolvedPeerIdentity = (string.IsNullOrEmpty(text) ? null : text);
-			Plugin.Log.LogInfo($"[Session] HELLO do peer (role={netRole}, identidade estável='{text}')");
-			EnsurePuppet();
-			_linked = true;
-			LogSessionIdentities();
-			LobbySync.MarkPeerConnected();
-			if (_role == NetRole.Host)
+			RemotePlayerPuppet remotePlayerPuppet = EnsurePuppet(from);
+			if ((Object)(object)remotePlayerPuppet != (Object)null)
 			{
-				_transport.Send(PacketWriter.Begin(PacketType.Hello).Byte(0).Str(StableIdentity.Resolve())
-					.Finish(), reliable: true);
-				_transport.Send(CharacterSaveSync.BuildDownloadFor(ResolvedPeerIdentity), reliable: true);
-				AutoJoin.ClearHostRichPresence();
-				MorningRitualSync.CatchUpExistingNpcs();
-			}
-			else
-			{
-				_transport.Send(PacketWriter.Begin(PacketType.SnapshotRequest).Finish(), reliable: true);
+				PlayerSync.ApplyRemoteState(packetReader, remotePlayerPuppet);
 			}
 			break;
 		}
-		case PacketType.PlayerState:
-			EnsurePuppet();
-			PlayerSync.ApplyRemoteState(packetReader, _puppet);
-			break;
 		case PacketType.SnapshotRequest:
-			Plugin.Log.LogInfo("[Session] cliente pediu snapshot — enviando (pausado por tick, ver _pendingSnapshotChunks)");
-			_pendingSnapshotChunks = new Queue<byte[]>(WorldSync.BuildSnapshotChunks());
+			if (_role == NetRole.Host)
+			{
+				Plugin.Log.LogInfo($"[Session] '{_net.NameOf(from)}' asked for the world snapshot - sending (paced).");
+				_paced.Remove(from);
+				EnqueuePacedChunks(WorldSync.BuildSnapshotChunks(), from);
+			}
 			break;
 		case PacketType.SnapshotChunk:
 		{
-			if (WorldSync.ReceiveChunk(packetReader, out var fullBlob))
+			if (from == 0 && WorldSync.ReceiveChunk(packetReader, out var fullBlob))
 			{
-				WorldSync.DeserializeWorld(fullBlob, ResolvedPeerIdentity);
-				_transport.Send(PacketWriter.Begin(PacketType.Ready).Finish(), reliable: true);
+				WorldSync.DeserializeWorld(fullBlob, _net.StableIdOf(0));
+				SendToHost(PacketWriter.Begin(PacketType.Ready).Finish());
 			}
 			break;
 		}
 		case PacketType.Ready:
-			Plugin.Log.LogInfo("[Session] cliente pronto (snapshot aplicado)");
+			Plugin.Log.LogInfo($"[Session] '{_net.NameOf(from)}' is ready (snapshot applied).");
 			break;
 		case PacketType.EnemyDelta:
 			EnemySync.ApplyDelta(packetReader);
 			break;
 		case PacketType.EnemyHit:
-			EnsurePuppet();
-			EnemySync.ApplyHitRequest(packetReader, ((Object)(object)_puppet != (Object)null) ? ((Component)_puppet).transform : null);
+		{
+			RemotePlayerPuppet remotePlayerPuppet2 = EnsurePuppet(from);
+			EnemySync.ApplyHitRequest(packetReader, ((Object)(object)remotePlayerPuppet2 != (Object)null) ? ((Component)remotePlayerPuppet2).transform : null);
 			break;
+		}
 		case PacketType.EnemyBehaviorRequest:
 			EnemySync.ApplyBehaviorRequest(packetReader);
 			break;
@@ -734,10 +784,13 @@ public sealed class CoopSession
 			EnemyHitAnimSync.ApplyIncoming(packetReader);
 			break;
 		case PacketType.LobbyStart:
-			LobbySync.ApplyStart();
+			if (from == 0)
+			{
+				LobbySync.ApplyStart();
+			}
 			break;
 		case PacketType.PrologueIntroReady:
-			LobbySync.ApplyPeerIntroDone();
+			LobbySync.ApplyPeerIntroDone(from);
 			break;
 		case PacketType.NpcDespawnedByLocation:
 			MorningRitualSync.ApplyDespawn(packetReader);
@@ -761,7 +814,7 @@ public sealed class CoopSession
 			FlareSync.ApplyThrown(packetReader);
 			break;
 		case PacketType.ChunkClaim:
-			LocationOwnership.ApplyClaim(packetReader);
+			LocationOwnership.ApplyClaim(packetReader, from);
 			break;
 		case PacketType.DoorDelta:
 			PropSync.ApplyDoors(packetReader);
@@ -794,13 +847,22 @@ public sealed class CoopSession
 			ClockSync.ApplyResume(packetReader);
 			break;
 		case PacketType.ClockHeartbeat:
-			ClockSync.ApplyHeartbeat(packetReader);
+			if (from == 0)
+			{
+				ClockSync.ApplyHeartbeat(packetReader);
+			}
 			break;
 		case PacketType.DayAdvance:
-			ClockSync.ApplyDayAdvance(packetReader);
+			if (from == 0)
+			{
+				ClockSync.ApplyDayAdvance(packetReader);
+			}
 			break;
 		case PacketType.RainState:
-			RainSync.ApplyHeartbeat(packetReader);
+			if (from == 0)
+			{
+				RainSync.ApplyHeartbeat(packetReader);
+			}
 			break;
 		case PacketType.DropCreate:
 			DropSync.ApplyCreate(packetReader);
@@ -816,12 +878,12 @@ public sealed class CoopSession
 			byte[] array = ContainerSync.ApplyIncoming(packetReader, _role == NetRole.Host);
 			if (array != null)
 			{
-				_transport.Send(array, reliable: true);
+				SendReliable(array);
 			}
 			break;
 		}
 		case PacketType.DownedState:
-			DownedSync.ApplyDownedState(packetReader);
+			DownedSync.ApplyDownedState(packetReader, from);
 			break;
 		case PacketType.Revive:
 			DownedSync.ApplyRevive();
@@ -863,8 +925,7 @@ public sealed class CoopSession
 			ChapterTransitionSync.ApplyChapterSave(packetReader);
 			break;
 		case PacketType.VoiceData:
-			EnsurePuppet();
-			VoiceSync.ApplyVoiceData(packetReader, _puppet);
+			VoiceSync.ApplyVoiceData(packetReader, EnsurePuppet(from));
 			break;
 		case PacketType.TrapSpawnFired:
 			TrapSpawnSync.ApplyFired(packetReader);
@@ -885,8 +946,7 @@ public sealed class CoopSession
 			MonsterRangedAttackSync.ApplyLanded(packetReader);
 			break;
 		case PacketType.PlayerBurningState:
-			EnsurePuppet();
-			PlayerBurnVisualSync.ApplyState(packetReader, _puppet);
+			PlayerBurnVisualSync.ApplyState(packetReader, EnsurePuppet(from));
 			break;
 		case PacketType.TrapPlaced:
 			TrapPlaceSync.ApplyPlaced(packetReader);
@@ -925,7 +985,7 @@ public sealed class CoopSession
 			KeyItemSync.ApplyPickup(packetReader);
 			break;
 		case PacketType.PauseState:
-			PauseSync.ApplyPeerState(packetReader);
+			PauseSync.ApplyPeerState(packetReader, from);
 			break;
 		case PacketType.LockState:
 			LockSync.ApplyChanges(packetReader);
@@ -940,36 +1000,50 @@ public sealed class CoopSession
 			ShadowSync.ApplyDeaths(packetReader);
 			break;
 		case PacketType.CharacterSaveUpload:
-			CharacterSaveSync.ApplyUpload(packetReader, ResolvedPeerIdentity);
+			if (_role == NetRole.Host)
+			{
+				CharacterSaveSync.ApplyUpload(packetReader, _net.StableIdOf(from));
+			}
 			break;
 		case PacketType.CharacterSaveDownload:
-			CharacterSaveSync.ApplyDownload(packetReader);
+			if (from == 0)
+			{
+				CharacterSaveSync.ApplyDownload(packetReader);
+			}
 			break;
 		default:
-			Plugin.Log.LogWarning($"[Session] pacote não tratado: {packetReader.Type}");
+			Plugin.Log.LogWarning($"[Session] unhandled packet: {packetReader.Type}");
 			break;
 		}
 	}
 
 	public void Stop()
 	{
-		if (_role == NetRole.Client && _linked && _transport != null && _transport.Connected)
+		if (_role == NetRole.Client && _linked && _net.Alive)
 		{
 			byte[] array = CharacterSaveSync.BuildUpload();
 			if (array != null)
 			{
-				_transport.Send(array, reliable: true);
+				SendToHost(array);
 			}
 		}
-		_transport?.Stop();
-		if ((Object)(object)_puppet != (Object)null)
+		_net.Close();
+		foreach (RemotePlayerPuppet puppet in _puppetList)
 		{
-			Object.Destroy((Object)(object)((Component)_puppet).gameObject);
+			if ((Object)(object)puppet != (Object)null)
+			{
+				Object.Destroy((Object)(object)((Component)puppet).gameObject);
+			}
 		}
-		_puppet = null;
+		_puppets.Clear();
+		_puppetList.Clear();
 		_linked = false;
-		_resolvedPeerIdentity = null;
 		CoopRuntime.SetSession(null);
+		ResetAllSync();
+	}
+
+	public static void ResetAllSync()
+	{
 		EnemySync.Reset();
 		EnemyHitAnimSync.Reset();
 		LiquidSync.Reset();

@@ -20,14 +20,6 @@ public static class PlayerActionSoundSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Expected O, but got Unknown
-		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005c: Expected O, but got Unknown
-		//IL_00a4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b1: Expected O, but got Unknown
-		//IL_00ec: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f9: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;

@@ -41,16 +41,6 @@ public static class PeerNameTagSync
 
 	public static void Draw(CoopSession session, RemotePlayerPuppet peerPuppet)
 	{
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0061: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b4: Unknown result type (might be due to invalid IL or missing references)
 		if (!_enabled || session == null || (Object)(object)peerPuppet == (Object)null || !peerPuppet.HasState)
 		{
 			return;
@@ -97,7 +87,6 @@ public static class PeerNameTagSync
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	private static string ResolveSteamPersonaName(ulong id64)
 	{
-		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
 		if (!SteamManager.Initialized)
 		{
 			return null;
@@ -107,13 +96,6 @@ public static class PeerNameTagSync
 
 	private static void EnsureStyle()
 	{
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004c: Expected O, but got Unknown
 		if (_style == null)
 		{
 			GUIStyle val = new GUIStyle

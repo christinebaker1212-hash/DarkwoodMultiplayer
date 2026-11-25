@@ -75,13 +75,6 @@ public static class FurnitureSync
 
 	private static Info GetInfo(Item it)
 	{
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
 		if (!_items.TryGetValue(it, out var value))
 		{
 			Vector3 position = ((Component)it).transform.position;
@@ -117,25 +110,6 @@ public static class FurnitureSync
 
 	public static byte[] PollDrags(Vector3 p1, Vector3 p2, bool isHost)
 	{
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03b0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03c1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0101: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0125: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0127: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01f6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_033e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0312: Unknown result type (might be due to invalid IL or missing references)
 		List<Item> list = null;
 		Item[] array = Scene();
 		foreach (Item val in array)
@@ -149,7 +123,7 @@ public static class FurnitureSync
 				_loggedNonDraggableLamp.Add(val);
 				Plugin.Log.LogWarning("[FurnitureSync][diag] lâmpada '" + val.name + "' é switchable MAS NÃO draggable - FurnitureSync NUNCA vai rastrear a posição dela (LampSync assume que sim - suposição errada pra esta).");
 			}
-			if (!val.draggable || Mathf.Min(Vector3.Distance(((Component)val).transform.position, p1), Vector3.Distance(((Component)val).transform.position, p2)) > 3000f)
+			if (!val.draggable || CoopPeers.MinDistance(((Component)val).transform.position, p1) > 3000f)
 			{
 				continue;
 			}
@@ -248,18 +222,6 @@ public static class FurnitureSync
 
 	public static void ApplyDrags(PacketReader r, bool isHost)
 	{
-		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ea: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0101: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0129: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0132: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0134: Unknown result type (might be due to invalid IL or missing references)
 		int num = r.UShort();
 		Vector3 p = default(Vector3);
 		for (int i = 0; i < num; i++)
@@ -303,16 +265,6 @@ public static class FurnitureSync
 
 	public static void Tick()
 	{
-		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0106: Unknown result type (might be due to invalid IL or missing references)
-		//IL_019c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01ac: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01cc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01dc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e3: Unknown result type (might be due to invalid IL or missing references)
 		float num = Time.time - 0.08f;
 		foreach (KeyValuePair<Item, Info> item in _items)
 		{
@@ -356,8 +308,6 @@ public static class FurnitureSync
 
 	private static Item FindByKey(string key)
 	{
-		//IL_009d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
 		if (_byKey.TryGetValue(key, out var value) && (Object)(object)value != (Object)null)
 		{
 			return value;
@@ -413,17 +363,11 @@ public static class FurnitureSync
 
 	private static string Key(Vector3 p)
 	{
-		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
 		return $"{Mathf.RoundToInt(p.x)}_{Mathf.RoundToInt(p.z)}";
 	}
 
 	public static void ForceRebroadcast()
 	{
-		//IL_003a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d1: Unknown result type (might be due to invalid IL or missing references)
 		List<Item> list = null;
 		foreach (KeyValuePair<Item, Info> item in _items)
 		{
@@ -453,18 +397,6 @@ public static class FurnitureSync
 
 	public static void DebugTick()
 	{
-		//IL_001f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0082: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fa: Unknown result type (might be due to invalid IL or missing references)
 		if (!Debug || (Object)(object)Player.Instance == (Object)null)
 		{
 			return;

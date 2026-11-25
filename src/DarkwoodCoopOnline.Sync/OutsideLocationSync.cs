@@ -15,12 +15,6 @@ public static class OutsideLocationSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Expected O, but got Unknown
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0069: Expected O, but got Unknown
-		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00be: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;

@@ -79,12 +79,6 @@ public static class SaveSlotPickerUI
 
 	public static void Draw()
 	{
-		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01aa: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01f5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_023f: Unknown result type (might be due to invalid IL or missing references)
 		if (_slots == null)
 		{
 			return;
@@ -141,24 +135,6 @@ public static class SaveSlotPickerUI
 
 	private static void EnsureStyles()
 	{
-		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0010: Expected O, but got Unknown
-		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004d: Expected O, but got Unknown
-		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0077: Expected O, but got Unknown
-		//IL_0090: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c4: Expected O, but got Unknown
-		//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
 		if (_boxStyle == null)
 		{
 			Texture2D val = new Texture2D(1, 1);

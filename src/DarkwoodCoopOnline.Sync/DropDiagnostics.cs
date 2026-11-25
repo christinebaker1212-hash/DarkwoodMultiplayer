@@ -13,8 +13,6 @@ public static class DropDiagnostics
 
 	public static void Capture()
 	{
-		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
 		Player instance = Player.Instance;
 		if ((Object)(object)instance == (Object)null)
 		{
@@ -42,10 +40,6 @@ public static class DropDiagnostics
 
 	private static void DumpItem(Item it, float dist)
 	{
-		//IL_015a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0178: Unknown result type (might be due to invalid IL or missing references)
-		//IL_017d: Unknown result type (might be due to invalid IL or missing references)
 		GameObject gameObject = ((Component)it).gameObject;
 		Inventory component = ((Component)it).GetComponent<Inventory>();
 		string arg = "?";
@@ -89,10 +83,6 @@ public static class DropDiagnostics
 
 	public static void Tick()
 	{
-		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0164: Unknown result type (might be due to invalid IL or missing references)
 		if (!_watching)
 		{
 			return;

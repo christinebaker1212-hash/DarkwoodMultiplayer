@@ -6,23 +6,16 @@ public static class SyncKeyUtil
 {
 	public static string PosKey(Vector3 p)
 	{
-		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
 		return $"{Mathf.RoundToInt(p.x)}_{Mathf.RoundToInt(p.z)}";
 	}
 
 	public static string Make(string name, Vector3 p)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
 		return name + "@" + PosKey(p);
 	}
 
 	public static bool TryParsePos(string key, out Vector3 pos)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008b: Unknown result type (might be due to invalid IL or missing references)
 		pos = Vector3.zero;
 		if (string.IsNullOrEmpty(key))
 		{

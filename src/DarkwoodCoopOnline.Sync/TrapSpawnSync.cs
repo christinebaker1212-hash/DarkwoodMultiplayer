@@ -18,9 +18,6 @@ public static class TrapSpawnSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0067: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -75,10 +72,6 @@ public static class TrapSpawnSync
 
 	public static void ApplyFired(PacketReader r)
 	{
-		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
 		string text = r.Str();
 		byte b = r.Byte();
 		string text2 = r.Str();
@@ -151,8 +144,6 @@ public static class TrapSpawnSync
 
 	private static string KeyOf(Trigger t)
 	{
-		//IL_001f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
 		return ((Object)t).name + "@" + Mathf.RoundToInt(((Component)t).transform.position.x) + "_" + Mathf.RoundToInt(((Component)t).transform.position.z);
 	}
 

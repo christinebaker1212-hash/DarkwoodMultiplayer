@@ -292,10 +292,6 @@ public static class EnemySync
 
 	private static void ClaimNativeOrDestroyIfDuplicate(Character c, string eventKey = null)
 	{
-		//IL_00a8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0104: Unknown result type (might be due to invalid IL or missing references)
 		foreach (KeyValuePair<string, Character> item in _puppetById)
 		{
 			if (!((Object)(object)item.Value != (Object)(object)c))
@@ -338,8 +334,6 @@ public static class EnemySync
 
 	public static void RegisterQuestSpawn(Character c, string eventKey = null)
 	{
-		//IL_00b6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c6: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)c == (Object)null || !CoopRuntime.SessionActive)
 		{
 			return;
@@ -364,23 +358,6 @@ public static class EnemySync
 
 	public static byte[] BuildDelta(Vector3 p1, Vector3 p2)
 	{
-		//IL_0303: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0308: Unknown result type (might be due to invalid IL or missing references)
-		//IL_031a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_031f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03d7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03c9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03dc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_05bc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_05da: Unknown result type (might be due to invalid IL or missing references)
-		//IL_060e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0618: Expected I4, but got Unknown
-		//IL_0624: Unknown result type (might be due to invalid IL or missing references)
-		//IL_063f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_065b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0665: Expected I4, but got Unknown
-		//IL_04fd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0513: Unknown result type (might be due to invalid IL or missing references)
 		Character[] array = SceneCache.Characters();
 		if (array != _ownedRawLast)
 		{
@@ -457,7 +434,7 @@ public static class EnemySync
 		{
 			if (!((Object)(object)item4.c == (Object)null) && ((CharBase)item4.c).alive)
 			{
-				if (Mathf.Min(Vector3.Distance(((Component)item4.c).transform.position, p1), Vector3.Distance(((Component)item4.c).transform.position, p2)) <= 4000f)
+				if (CoopPeers.MinDistance(((Component)item4.c).transform.position, p1) <= 4000f)
 				{
 					list2.Add(item4);
 				}
@@ -520,9 +497,6 @@ public static class EnemySync
 
 	public static byte[] BuildSpawns()
 	{
-		//IL_006c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0076: Expected I4, but got Unknown
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
 		if (_pendingSpawns == null || _pendingSpawns.Count == 0)
 		{
 			return null;
@@ -541,24 +515,6 @@ public static class EnemySync
 
 	public static void CheckAggroRedirect(Transform localPlayer, Transform peerPuppet)
 	{
-		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006a: Invalid comparison between Unknown and I4
-		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007a: Invalid comparison between Unknown and I4
-		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008a: Invalid comparison between Unknown and I4
-		//IL_00c4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00db: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0147: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0151: Invalid comparison between Unknown and I4
-		//IL_016c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0154: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015e: Invalid comparison between Unknown and I4
-		//IL_0161: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0168: Invalid comparison between Unknown and I4
-		//IL_017f: Unknown result type (might be due to invalid IL or missing references)
 		if (!AggroRedirectEnabled || (Object)(object)peerPuppet == (Object)null || (Object)(object)localPlayer == (Object)null)
 		{
 			return;
@@ -592,20 +548,21 @@ public static class EnemySync
 		}
 	}
 
-	public static void CheckAoeDamageToPeer(Transform peerPuppet)
+	public static void CheckAoeDamageToPeers(IReadOnlyList<RemotePlayerPuppet> puppets)
 	{
-		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
-		if ((Object)(object)peerPuppet == (Object)null)
-		{
-			return;
-		}
 		_aoeDamageTimer += Time.deltaTime;
 		if (_aoeDamageTimer < 1f)
 		{
 			return;
 		}
 		_aoeDamageTimer = 0f;
+		foreach (RemotePlayerPuppet aoeTarget in puppets)
+		{
+		if ((Object)(object)aoeTarget == (Object)null || !aoeTarget.HasState || DownedSync.IsPeerDowned(aoeTarget.Slot) || DownedSync.IsPeerReallyDead(aoeTarget.Slot))
+		{
+			continue;
+		}
+		Transform peerPuppet = ((Component)aoeTarget).transform;
 		foreach (OwnedEnemy item in _ownedCache)
 		{
 			Character c = item.c;
@@ -621,13 +578,14 @@ public static class EnemySync
 				{
 					float num3 = (float)c.aroundMeDamage * num2;
 					Plugin.Log.LogInfo("[EnemySync][AoE] '" + ((Object)((Component)c).gameObject).name + "' dano em área acertaria o peer " + $"(dist={num:F0} range={c.aroundMeDamageRange:F0} dmg={num3:F1}) - repassando pro peer.");
-					PlayerDamageSync.RelayHit(num3, normalHit: false);
+					PlayerDamageSync.RelayHit(num3, normalHit: false, aoeTarget.Slot);
 				}
 			}
 		}
+		}
 	}
 
-	public static void SyncCombatTensionForPeer(Transform peerPuppet)
+	public static void SyncCombatTensionForPeers(IReadOnlyList<RemotePlayerPuppet> puppets)
 	{
 		Player p = Player.Instance;
 		if ((Object)(object)p == (Object)null)
@@ -637,7 +595,7 @@ public static class EnemySync
 		bool changed = false;
 		_countedAsAttackingPeer.RemoveWhere(delegate(Character c)
 		{
-			if ((Object)(object)c != (Object)null && ((CharBase)c).alive && (Object)(object)peerPuppet != (Object)null && (Object)(object)c.target == (Object)(object)peerPuppet)
+			if ((Object)(object)c != (Object)null && ((CharBase)c).alive && TargetsAnyPuppet(c, puppets))
 			{
 				return false;
 			}
@@ -648,12 +606,12 @@ public static class EnemySync
 			changed = true;
 			return true;
 		});
-		if ((Object)(object)peerPuppet != (Object)null)
+		if (puppets.Count > 0)
 		{
 			foreach (OwnedEnemy item in _ownedCache)
 			{
 				Character c2 = item.c;
-				if (!((Object)(object)c2 == (Object)null) && ((CharBase)c2).alive && !((Object)(object)c2.target != (Object)(object)peerPuppet) && _countedAsAttackingPeer.Add(c2))
+				if (!((Object)(object)c2 == (Object)null) && ((CharBase)c2).alive && TargetsAnyPuppet(c2, puppets) && _countedAsAttackingPeer.Add(c2))
 				{
 					if (!p.charactersAttackingMe.Contains(c2))
 					{
@@ -667,6 +625,35 @@ public static class EnemySync
 		{
 			p.checkInCombatChars();
 		}
+	}
+
+	private static bool NearAny(Vector3 x, List<Vector3> positions, float range)
+	{
+		for (int i = 0; i < positions.Count; i++)
+		{
+			if (Vector3.Distance(x, positions[i]) <= range)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static bool TargetsAnyPuppet(Character c, IReadOnlyList<RemotePlayerPuppet> puppets)
+	{
+		Transform target = c.target;
+		if ((Object)(object)target == (Object)null)
+		{
+			return false;
+		}
+		for (int i = 0; i < puppets.Count; i++)
+		{
+			if ((Object)(object)puppets[i] != (Object)null && (Object)(object)target == (Object)(object)((Component)puppets[i]).transform)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static void ReleaseAggroFromPuppet(Transform peerPuppet)
@@ -757,10 +744,8 @@ public static class EnemySync
 		}
 	}
 
-	public static void WakePuppetsNearPeer(Vector3 peerPos)
+	public static void WakePuppetsNearPeers(List<Vector3> peerPositions)
 	{
-		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
 		_puppetWakeTimer += Time.deltaTime;
 		if (_puppetWakeTimer < 1f)
 		{
@@ -770,7 +755,7 @@ public static class EnemySync
 		foreach (KeyValuePair<string, Character> item in _puppetById)
 		{
 			Character value = item.Value;
-			if (!((Object)(object)value == (Object)null) && !((Component)value).gameObject.activeSelf && !(Vector3.Distance(((Component)value).transform.position, peerPos) > 1200f))
+			if (!((Object)(object)value == (Object)null) && !((Component)value).gameObject.activeSelf && NearAny(((Component)value).transform.position, peerPositions, 1200f))
 			{
 				((Component)value).gameObject.SetActive(true);
 				Collider component = ((Component)value).GetComponent<Collider>();
@@ -788,10 +773,8 @@ public static class EnemySync
 		}
 	}
 
-	public static void WakeOwnedNearPeer(Vector3 peerPos)
+	public static void WakeOwnedNearPeers(List<Vector3> peerPositions)
 	{
-		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
 		_ownedWakeTimer += Time.deltaTime;
 		if (_ownedWakeTimer < 1f)
 		{
@@ -801,7 +784,7 @@ public static class EnemySync
 		foreach (KeyValuePair<string, Character> item in _ownedById)
 		{
 			Character value = item.Value;
-			if (!((Object)(object)value == (Object)null) && !((Component)value).gameObject.activeSelf && !(Vector3.Distance(((Component)value).transform.position, peerPos) > 1200f))
+			if (!((Object)(object)value == (Object)null) && !((Component)value).gameObject.activeSelf && NearAny(((Component)value).transform.position, peerPositions, 1200f))
 			{
 				((Component)value).gameObject.SetActive(true);
 				Collider component = ((Component)value).GetComponent<Collider>();
@@ -821,13 +804,6 @@ public static class EnemySync
 
 	public static void ApplyDelta(PacketReader r)
 	{
-		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d9: Unknown result type (might be due to invalid IL or missing references)
 		int num = r.UShort();
 		int num2 = 0;
 		for (int i = 0; i < num; i++)
@@ -881,28 +857,6 @@ public static class EnemySync
 
 	public static void ApplySpawns(PacketReader r)
 	{
-		//IL_00c5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0130: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0137: Invalid comparison between Unknown and I4
-		//IL_014a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_066e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_067f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01bf: Invalid comparison between Unknown and I4
-		//IL_03f1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03f8: Invalid comparison between Unknown and I4
-		//IL_02a3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02aa: Invalid comparison between Unknown and I4
-		//IL_01ec: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01f1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02d7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02dc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_045a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_045f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04a0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04a5: Unknown result type (might be due to invalid IL or missing references)
 		int num = r.UShort();
 		HashSet<Character> hashSet = new HashSet<Character>();
 		foreach (KeyValuePair<string, Character> item in _puppetById)
@@ -1079,7 +1033,6 @@ public static class EnemySync
 
 	public static void PruneLocalOrphans()
 	{
-		//IL_01b5: Unknown result type (might be due to invalid IL or missing references)
 		HashSet<Character> hashSet = new HashSet<Character>();
 		foreach (KeyValuePair<string, Character> item in _puppetById)
 		{
@@ -1271,10 +1224,6 @@ public static class EnemySync
 
 	private static void Drive(string id, Character c, Vector3 pos, float hp, Quaternion rot, string bodyClip, string legsClip)
 	{
-		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0079: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
 		((CharBase)c).health = hp;
 		EnemyPuppet enemyPuppet = ((Component)c).GetComponent<EnemyPuppet>();
 		if ((Object)(object)enemyPuppet == (Object)null)
@@ -1310,11 +1259,6 @@ public static class EnemySync
 
 	private static void DetectLocalBehaviorChange(string id, Character c)
 	{
-		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00eb: Unknown result type (might be due to invalid IL or missing references)
 		if (!_puppetLastAggressiveness.TryGetValue(id, out var value))
 		{
 			return;
@@ -1336,8 +1280,6 @@ public static class EnemySync
 
 	public static byte[] BuildBehaviorRequests()
 	{
-		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007c: Expected I4, but got Unknown
 		if (_pendingBehaviorRequests == null || _pendingBehaviorRequests.Count == 0)
 		{
 			return null;
@@ -1355,7 +1297,6 @@ public static class EnemySync
 
 	public static void ApplyBehaviorRequest(PacketReader r)
 	{
-		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
 		int num = r.UShort();
 		for (int i = 0; i < num; i++)
 		{

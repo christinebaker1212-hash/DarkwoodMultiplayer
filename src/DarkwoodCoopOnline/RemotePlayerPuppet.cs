@@ -31,6 +31,89 @@ public sealed class RemotePlayerPuppet : CharBase
 
 	private float _targetAim;
 
+	private float _shownAim;
+
+	// Which player this is (slot 0 = host) and their name
+	public int Slot = -1;
+
+	public string PeerName = "";
+
+	// Snapshot interpolation: positions arrive ~20 times a second with uneven gaps; we show the player
+	// where they were InterpDelay ago, between two real samples, instead of chasing the newest one.
+	private struct PosSample
+	{
+		public float T;
+
+		public Vector3 P;
+	}
+
+	private readonly PosSample[] _samples = new PosSample[16];
+
+	private int _sampleCount;
+
+	private const float InterpDelay = 0.1f;
+
+	private const float MaxExtrapolate = 0.15f;
+
+	private const float TeleportDistance = 600f;
+
+	private void PushSample(Vector3 pos)
+	{
+		float unscaledTime = Time.unscaledTime;
+		if (_sampleCount > 0 && Vector3.Distance(_samples[_sampleCount - 1].P, pos) > TeleportDistance)
+		{
+			// teleport (door to another area, F1, respawn): jump there instead of sliding across the map
+			_sampleCount = 0;
+			((Component)this).transform.position = pos;
+		}
+		if (_sampleCount == _samples.Length)
+		{
+			Array.Copy(_samples, 1, _samples, 0, _samples.Length - 1);
+			_sampleCount--;
+		}
+		_samples[_sampleCount++] = new PosSample
+		{
+			T = unscaledTime,
+			P = pos
+		};
+	}
+
+	private Vector3 SampledPosition()
+	{
+		if (_sampleCount == 0)
+		{
+			return _targetPos;
+		}
+		float num = Time.unscaledTime - InterpDelay;
+		if (num <= _samples[0].T)
+		{
+			return _samples[0].P;
+		}
+		for (int i = 0; i < _sampleCount - 1; i++)
+		{
+			PosSample posSample = _samples[i];
+			PosSample posSample2 = _samples[i + 1];
+			if (num >= posSample.T && num <= posSample2.T)
+			{
+				float num2 = posSample2.T - posSample.T;
+				return Vector3.Lerp(posSample.P, posSample2.P, (num2 > 0.0001f) ? ((num - posSample.T) / num2) : 1f);
+			}
+		}
+		// past the newest sample (a late packet): keep moving the same way for a moment, then stop
+		PosSample posSample3 = _samples[_sampleCount - 1];
+		if (_sampleCount >= 2)
+		{
+			PosSample posSample4 = _samples[_sampleCount - 2];
+			float num3 = posSample3.T - posSample4.T;
+			if (num3 > 0.0001f && num3 < 0.5f)
+			{
+				float num4 = Mathf.Min(num - posSample3.T, MaxExtrapolate);
+				return posSample3.P + (posSample3.P - posSample4.P) * (num4 / num3);
+			}
+		}
+		return posSample3.P;
+	}
+
 	private string _currentClip = "Idle";
 
 	private bool _hasState;
@@ -127,31 +210,6 @@ public sealed class RemotePlayerPuppet : CharBase
 
 	public static RemotePlayerPuppet Create()
 	{
-		//IL_001a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0020: Expected O, but got Unknown
-		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0065: Expected O, but got Unknown
-		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0091: Expected O, but got Unknown
-		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_017f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0194: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0121: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0126: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01c6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0260: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0449: Unknown result type (might be due to invalid IL or missing references)
-		//IL_048d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0517: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0533: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)Player.Instance == (Object)null)
 		{
 			return null;
@@ -305,9 +363,6 @@ public sealed class RemotePlayerPuppet : CharBase
 
 	private void InitEntity()
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
 		base.faction = (Faction)0;
 		base.maxHealth = 100f;
 		((CharBase)this).health = base.maxHealth;
@@ -321,18 +376,18 @@ public sealed class RemotePlayerPuppet : CharBase
 
 	public void ApplyState(Vector3 pos, float aimAngle, string clip, bool attacking, string lib, string legsClip, Quaternion legsRot, bool legsVisible, bool legsPlaying, bool torsoPlaying, string lightItemType, int torsoFrame, bool lanternOn, float lanternRadius, float flashlightRadius, float flashlightBrightness)
 	{
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0063: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
-		//IL_021e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_024f: Unknown result type (might be due to invalid IL or missing references)
 		if (!_hasState && (Object)(object)_collider != (Object)null)
 		{
 			((Collider)_collider).isTrigger = _pendingColliderIsTrigger;
 		}
 		_targetPos = pos;
 		_targetAim = aimAngle;
+		if (!_hasState)
+		{
+			_shownAim = aimAngle;
+			((Component)this).transform.position = pos;
+		}
+		PushSample(pos);
 		_currentClip = (string.IsNullOrEmpty(clip) ? "Idle" : clip);
 		_hasState = true;
 		_torsoFrame = torsoFrame;
@@ -468,12 +523,6 @@ public sealed class RemotePlayerPuppet : CharBase
 
 	private void UpdateParticleEmitterPosition(string clipName)
 	{
-		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0078: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009d: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)_particleEmitterGO == (Object)null || _lightItem?.emitterPositions?.typesDict == null || !_lightItem.emitterPositions.typesDict.TryGetValue(clipName, out var value))
 		{
 			return;
@@ -494,9 +543,6 @@ public sealed class RemotePlayerPuppet : CharBase
 
 	private GameObject SpawnEmitterObject(UnityEngine.Object prefab)
 	{
-		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
 		Transform val = (((Object)(object)_torso != (Object)null) ? ((Component)_torso).transform : ((Component)this).transform);
 		Object obj = Object.Instantiate(prefab, val.position, Quaternion.Euler(90f, 0f, 0f));
 		GameObject val2 = (GameObject)(object)((obj is GameObject) ? obj : null);
@@ -541,18 +587,12 @@ public sealed class RemotePlayerPuppet : CharBase
 
 	private void Update()
 	{
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0143: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01c6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_019e: Unknown result type (might be due to invalid IL or missing references)
 		if (!_hasState)
 		{
 			return;
 		}
-		((Component)this).transform.position = Vector3.Lerp(((Component)this).transform.position, _targetPos, 12f * Time.deltaTime);
+		((Component)this).transform.position = SampledPosition();
+		_shownAim = Mathf.LerpAngle(_shownAim, _targetAim, Mathf.Clamp01(25f * Time.unscaledDeltaTime));
 		string text = _currentClip;
 		if (_attackHold > 0f)
 		{
@@ -566,7 +606,7 @@ public sealed class RemotePlayerPuppet : CharBase
 		}
 		if ((Object)(object)_torso != (Object)null)
 		{
-			((Component)_torso).transform.rotation = Quaternion.Euler(90f, _targetAim, 0f);
+			((Component)_torso).transform.rotation = Quaternion.Euler(90f, _shownAim, 0f);
 			SafePlay(_torso, text);
 			if (_attackHold <= 0f && _hitHold <= 0f)
 			{
@@ -596,9 +636,6 @@ public sealed class RemotePlayerPuppet : CharBase
 
 	private void LateUpdate()
 	{
-		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
 		if (!_hasState)
 		{
 			return;
@@ -622,41 +659,6 @@ public sealed class RemotePlayerPuppet : CharBase
 
 	private void PlayFrameTriggers(tk2dSpriteAnimationClip clip, int frameNum, Transform anchor)
 	{
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0035: Invalid comparison between Unknown and I4
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003a: Invalid comparison between Unknown and I4
-		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0042: Invalid comparison between Unknown and I4
-		//IL_0235: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0240: Unknown result type (might be due to invalid IL or missing references)
-		//IL_020a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ab: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0125: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0130: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0135: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0139: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0148: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0153: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0158: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0164: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0169: Unknown result type (might be due to invalid IL or missing references)
-		//IL_016e: Unknown result type (might be due to invalid IL or missing references)
 		tk2dSpriteAnimationFrame frame = clip.GetFrame(frameNum);
 		if (frame == null)
 		{
@@ -737,8 +739,6 @@ public sealed class RemotePlayerPuppet : CharBase
 
 	private static void StripChildren(GameObject go)
 	{
-		//IL_001a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0020: Expected O, but got Unknown
 		List<GameObject> list = new List<GameObject>();
 		foreach (Transform item in go.transform)
 		{

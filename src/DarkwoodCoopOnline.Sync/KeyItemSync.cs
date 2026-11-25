@@ -66,15 +66,6 @@ public static class KeyItemSync
 
 	public static void ApplyPickup(PacketReader r)
 	{
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007c: Expected O, but got Unknown
-		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c2: Expected O, but got Unknown
-		//IL_00f4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0105: Expected O, but got Unknown
 		string text = r.Str();
 		Kind kind = (Kind)r.Byte();
 		_known.Add(text);

@@ -14,17 +14,6 @@ public static class UiPauseSuppress
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0049: Expected O, but got Unknown
-		//IL_004a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0064: Expected O, but got Unknown
-		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007e: Expected O, but got Unknown
-		//IL_007e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0098: Expected O, but got Unknown
-		//IL_00b1: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -39,10 +28,6 @@ public static class UiPauseSuppress
 
 	private static void Hook(Harmony harmony, Type type, string openName, string closeName)
 	{
-		//IL_0083: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0091: Expected O, but got Unknown
-		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b2: Expected O, but got Unknown
 		try
 		{
 			MethodInfo methodInfo = AccessTools.Method(type, openName, (Type[])null, (Type[])null);

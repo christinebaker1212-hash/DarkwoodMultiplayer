@@ -14,7 +14,8 @@ public static class LocationOwnership
 
 	private static readonly Dictionary<string, Location> _claimedByMe = new Dictionary<string, Location>();
 
-	private static readonly HashSet<string> _claimedByPeer = new HashSet<string>();
+	// location id -> slot of the player who owns it
+	private static readonly Dictionary<string, int> _claimedByPeer = new Dictionary<string, int>();
 
 	private const float WakeRange = 1200f;
 
@@ -22,10 +23,8 @@ public static class LocationOwnership
 
 	private static float _wakeTimer;
 
-	public static void WakeNearbyInactiveTick(Vector3 peerPos)
+	public static void WakeNearbyInactiveTick(List<Vector3> peerPositions)
 	{
-		//IL_0097: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
 		_wakeTimer += Time.deltaTime;
 		if (_wakeTimer < 1f)
 		{
@@ -41,7 +40,7 @@ public static class LocationOwnership
 			}
 			foreach (Character characters in value.charactersList)
 			{
-				if (!((Object)(object)characters == (Object)null) && !((Component)characters).gameObject.activeSelf && !(Vector3.Distance(((Component)characters).transform.position, peerPos) > 1200f))
+				if (!((Object)(object)characters == (Object)null) && !((Component)characters).gameObject.activeSelf && WithinAny(((Component)characters).transform.position, peerPositions, 1200f))
 				{
 					((Component)characters).gameObject.SetActive(true);
 					Plugin.Log.LogInfo("[LocationOwnership] acordei personagem inativo perto do peer (WorldGrid só ativa por proximidade a MIM, e eu não estava perto): '" + ((Object)((Component)characters).gameObject).name + "' na Location '" + item.Key + "'.");
@@ -52,11 +51,6 @@ public static class LocationOwnership
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0088: Expected O, but got Unknown
-		//IL_0088: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -70,10 +64,6 @@ public static class LocationOwnership
 
 	private static string LocationId(Location loc)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
 		Vector3 position = ((Component)loc).transform.position;
 		return $"{((Object)((Component)loc).gameObject).name}@{Mathf.RoundToInt(position.x)}_{Mathf.RoundToInt(position.z)}";
 	}
@@ -98,7 +88,7 @@ public static class LocationOwnership
 			return true;
 		}
 		string text = LocationId(__instance);
-		if (_claimedByPeer.Contains(text))
+		if (_claimedByPeer.ContainsKey(text))
 		{
 			Plugin.Log.LogInfo("[LocationOwnership] Location '" + text + "' já é do peer - pulando inicialização nativa aqui.");
 			return false;
@@ -111,7 +101,7 @@ public static class LocationOwnership
 		if (CoopRuntime.SessionActive && !IsDreamLocation(__instance))
 		{
 			string text = LocationId(__instance);
-			if (!_claimedByPeer.Contains(text) && !_claimedByMe.ContainsKey(text))
+			if (!_claimedByPeer.ContainsKey(text) && !_claimedByMe.ContainsKey(text))
 			{
 				_claimedByMe[text] = __instance;
 				CoopRuntime.Session.SendReliable(PacketWriter.Begin(PacketType.ChunkClaim).Str(text).Finish());
@@ -120,7 +110,7 @@ public static class LocationOwnership
 		}
 	}
 
-	public static void ApplyClaim(PacketReader r)
+	public static void ApplyClaim(PacketReader r, int from)
 	{
 		string text = r.Str();
 		if (string.IsNullOrEmpty(text))
@@ -129,11 +119,13 @@ public static class LocationOwnership
 		}
 		if (_claimedByMe.TryGetValue(text, out var value))
 		{
-			if (CoopRuntime.Session != null && CoopRuntime.Session.Role == NetRole.Host)
+			// both of us set the place up at once: the lower slot keeps it (the host is slot 0)
+			int num = CoopRuntime.Session?.MySlot ?? 0;
+			if (num < from)
 			{
 				return;
 			}
-			Plugin.Log.LogWarning("[LocationOwnership] corrida de reivindicação na Location '" + text + "' - cedendo pro host (destruindo meus personagens já spawnados ali).");
+			Plugin.Log.LogWarning($"[LocationOwnership] claim race on '{text}' with slot {from} - giving it to them (destroying my characters there).");
 			_claimedByMe.Remove(text);
 			if ((Object)(object)value != (Object)null)
 			{
@@ -145,12 +137,45 @@ public static class LocationOwnership
 					}
 				}
 			}
-			_claimedByPeer.Add(text);
+			_claimedByPeer[text] = from;
 		}
-		else
+		else if (!_claimedByPeer.TryGetValue(text, out var value2) || from < value2)
 		{
-			_claimedByPeer.Add(text);
+			_claimedByPeer[text] = from;
 		}
+	}
+
+	// A player left: the places they owned are nobody's now (the next player to set one up claims it)
+	public static void OnPeerLeft(int slot)
+	{
+		List<string> list = new List<string>();
+		foreach (KeyValuePair<string, int> item in _claimedByPeer)
+		{
+			if (item.Value == slot)
+			{
+				list.Add(item.Key);
+			}
+		}
+		foreach (string item2 in list)
+		{
+			_claimedByPeer.Remove(item2);
+		}
+		if (list.Count > 0)
+		{
+			Plugin.Log.LogInfo($"[LocationOwnership] slot {slot} left - released {list.Count} location(s) they owned.");
+		}
+	}
+
+	private static bool WithinAny(Vector3 x, List<Vector3> positions, float range)
+	{
+		for (int i = 0; i < positions.Count; i++)
+		{
+			if (Vector3.Distance(x, positions[i]) <= range)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static void Reset()

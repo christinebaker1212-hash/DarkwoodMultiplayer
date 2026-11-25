@@ -173,14 +173,6 @@ public static class DebugCheats
 
 	public static void SpawnEnemyByName(string name)
 	{
-		//IL_0016: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0035: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009f: Unknown result type (might be due to invalid IL or missing references)
 		Player instance = Player.Instance;
 		if (!((Object)(object)instance == (Object)null))
 		{
@@ -209,8 +201,6 @@ public static class DebugCheats
 
 	public static void ForceNearestEvent()
 	{
-		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
 		Player instance = Player.Instance;
 		if ((Object)(object)instance == (Object)null)
 		{
@@ -273,15 +263,6 @@ public static class DebugCheats
 
 	public static void DumpNearbyEnemyPositions()
 	{
-		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fa: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0132: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0148: Unknown result type (might be due to invalid IL or missing references)
-		//IL_017a: Unknown result type (might be due to invalid IL or missing references)
 		Player instance = Player.Instance;
 		if ((Object)(object)instance == (Object)null)
 		{
@@ -310,8 +291,6 @@ public static class DebugCheats
 
 	public static void KillNearestEnemy()
 	{
-		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
 		Player instance = Player.Instance;
 		if ((Object)(object)instance == (Object)null)
 		{
@@ -343,14 +322,6 @@ public static class DebugCheats
 
 	public static void TeleportToKeyword(string keyword)
 	{
-		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0078: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0103: Unknown result type (might be due to invalid IL or missing references)
 		Player instance = Player.Instance;
 		if ((Object)(object)instance == (Object)null)
 		{
@@ -384,9 +355,6 @@ public static class DebugCheats
 
 	private static void TeleportAndGenerateChunk(Player p, Vector3 dest)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
 		p.teleportTo(dest, ((Component)p).transform.rotation);
 		WorldGrid instance = Singleton<WorldGrid>.Instance;
 		if ((Object)(object)instance != (Object)null)
@@ -398,8 +366,6 @@ public static class DebugCheats
 
 	public static void DumpAllCharacters()
 	{
-		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
 		Plugin.Log.LogInfo("========================= [CharacterDump] início =========================");
 		int num = 0;
 		Character[] array = Object.FindObjectsOfType<Character>(true);
@@ -416,8 +382,6 @@ public static class DebugCheats
 
 	public static void DumpAllLocations()
 	{
-		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
 		Plugin.Log.LogInfo("========================= [LocationDump] início =========================");
 		int num = 0;
 		Location[] array = Object.FindObjectsOfType<Location>();
@@ -434,10 +398,6 @@ public static class DebugCheats
 
 	public static void UnlockNearestLock()
 	{
-		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ab: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b6: Unknown result type (might be due to invalid IL or missing references)
 		Player instance = Player.Instance;
 		if ((Object)(object)instance == (Object)null)
 		{
@@ -645,14 +605,6 @@ public static class DebugCheats
 
 	private static void ForceDoctorDialogueInner()
 	{
-		//IL_00b6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0105: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0115: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d7: Unknown result type (might be due to invalid IL or missing references)
 		Player instance = Player.Instance;
 		if ((Object)(object)instance == (Object)null)
 		{

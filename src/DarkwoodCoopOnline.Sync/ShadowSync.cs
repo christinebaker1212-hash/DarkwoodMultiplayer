@@ -27,8 +27,6 @@ public static class ShadowSync
 
 	public static byte[] BuildDelta()
 	{
-		//IL_01b7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_025f: Unknown result type (might be due to invalid IL or missing references)
 		HashSet<ShadowCreature> hashSet = new HashSet<ShadowCreature>();
 		foreach (LocalShadow item2 in _localCache)
 		{
@@ -99,7 +97,6 @@ public static class ShadowSync
 
 	public static byte[] BuildSpawns()
 	{
-		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
 		if (_pendingSpawns == null || _pendingSpawns.Count == 0)
 		{
 			return null;
@@ -130,9 +127,6 @@ public static class ShadowSync
 
 	public static void ApplyDelta(PacketReader r)
 	{
-		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
 		int num = r.UShort();
 		for (int i = 0; i < num; i++)
 		{
@@ -148,10 +142,6 @@ public static class ShadowSync
 
 	public static void ApplySpawns(PacketReader r)
 	{
-		//IL_0016: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
 		int num = r.UShort();
 		for (int i = 0; i < num; i++)
 		{

@@ -17,14 +17,6 @@ public static class BansheeScreamSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0049: Expected O, but got Unknown
-		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0092: Expected O, but got Unknown
-		//IL_0092: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -61,7 +53,6 @@ public static class BansheeScreamSync
 
 	private static void EmpPostfix(Item __instance, float _time, bool __state)
 	{
-		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
 		if (!_applyingRemote && CoopRuntime.SessionActive && !((Object)(object)__instance == (Object)null) && !__state)
 		{
 			Plugin.Log.LogInfo("[BansheeScreamSync] item '" + ((Object)((Component)__instance).gameObject).name + "' levou EMP de verdade (colisão física local) - avisando o peer.");
@@ -73,11 +64,6 @@ public static class BansheeScreamSync
 
 	public static void ApplyItemDisabled(PacketReader r)
 	{
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
 		string text = r.Str();
 		Vector3 val = r.Vec3();
 		float num = r.Float();

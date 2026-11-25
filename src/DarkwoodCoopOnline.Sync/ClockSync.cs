@@ -114,8 +114,6 @@ public static class ClockSync
 
 	private static void SpawnEndOfNightVines()
 	{
-		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
 		Player instance = Player.Instance;
 		if (!((Object)(object)instance == (Object)null) && !((Object)(object)instance.whereAmI == (Object)null) && !((Object)(object)instance.whereAmI.bigLocation == (Object)null))
 		{

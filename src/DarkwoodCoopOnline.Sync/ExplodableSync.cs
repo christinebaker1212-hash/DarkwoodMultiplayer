@@ -17,11 +17,6 @@ public static class ExplodableSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0061: Expected O, but got Unknown
-		//IL_0061: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -40,10 +35,6 @@ public static class ExplodableSync
 
 	private static void AfterActivate(Explodes __instance, float __state)
 	{
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)__instance != (Object)null)
 		{
 			__instance.damage = __state;
@@ -60,11 +51,6 @@ public static class ExplodableSync
 
 	public static void ApplyActivated(PacketReader r)
 	{
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
 		string text = r.Str();
 		Vector3 val = r.Vec3();
 		Explodes val2 = null;

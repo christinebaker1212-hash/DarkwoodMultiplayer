@@ -35,9 +35,6 @@ public static class CharacterMessageSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0074: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -279,24 +276,16 @@ public static class CharacterMessageSync
 
 	private static string NpcKeyOf(NPC npc)
 	{
-		//IL_0016: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
 		return $"{((Object)((Component)npc).gameObject).name}@{Mathf.RoundToInt(((Component)npc).transform.position.x)}_{Mathf.RoundToInt(((Component)npc).transform.position.z)}";
 	}
 
 	private static string TransformKeyOf(Transform t)
 	{
-		//IL_0011: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
 		return $"{((Object)((Component)t).gameObject).name}@{Mathf.RoundToInt(t.position.x)}_{Mathf.RoundToInt(t.position.z)}";
 	}
 
 	private static bool TransformKeyMatches(Transform t, string key, out float dist)
 	{
-		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
 		dist = float.MaxValue;
 		int num = key.LastIndexOf('@');
 		if (num < 0)

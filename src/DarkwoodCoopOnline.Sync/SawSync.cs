@@ -21,7 +21,6 @@ public static class SawSync
 
 	private static Info GetInfo(Saw s)
 	{
-		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
 		if (!_saws.TryGetValue(s, out var value))
 		{
 			value = new Info
@@ -39,22 +38,16 @@ public static class SawSync
 
 	private static string Key(Vector3 p)
 	{
-		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
 		return $"{Mathf.RoundToInt(p.x)}_{Mathf.RoundToInt(p.z)}";
 	}
 
 	public static byte[] PollChanges(Vector3 p1, Vector3 p2)
 	{
-		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
 		List<(string, float)> list = null;
 		Saw[] array = SceneCache.Saws();
 		foreach (Saw val in array)
 		{
-			if ((Object)(object)val == (Object)null || Mathf.Min(Vector3.Distance(((Component)val).transform.position, p1), Vector3.Distance(((Component)val).transform.position, p2)) > 4000f)
+			if ((Object)(object)val == (Object)null || CoopPeers.MinDistance(((Component)val).transform.position, p1) > 4000f)
 			{
 				continue;
 			}

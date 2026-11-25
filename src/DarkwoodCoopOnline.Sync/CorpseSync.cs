@@ -27,10 +27,6 @@ public static class CorpseSync
 
 	public static byte[] PollFoundCorpses()
 	{
-		//IL_0106: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0127: Expected I4, but got Unknown
-		//IL_012e: Unknown result type (might be due to invalid IL or missing references)
 		if (Time.time < _nextScanAt)
 		{
 			return null;
@@ -71,15 +67,6 @@ public static class CorpseSync
 
 	public static void ApplyFoundCorpses(PacketReader r)
 	{
-		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0061: Invalid comparison between Unknown and I4
-		//IL_00c7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0173: Unknown result type (might be due to invalid IL or missing references)
 		int num = r.UShort();
 		for (int i = 0; i < num; i++)
 		{

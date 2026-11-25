@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using DarkwoodCoopOnline.Sync;
 using HarmonyLib;
-using Steamworks;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -48,9 +47,6 @@ public static class PrologueJoinSync
 
 	public static void EnsurePatched()
 	{
-		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004c: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -71,130 +67,17 @@ public static class PrologueJoinSync
 		}
 	}
 
-	public static void BeginLanJoin(string hostIp, int port)
+	// JOIN while the host is in the prologue: pick a slot here and start a new game in step with them
+	public static void ChooseSlotForNewGame()
 	{
-		string text = $"http://{hostIp}:{port}/status";
-		Plugin.Log.LogInfo("[PrologueJoinSync] consultando " + text + " antes de decidir o fluxo de JOIN...");
-		LanSaveTransfer.SetChecking("LAN: checking host status (" + hostIp + ")...");
-		SaveRelay.DownloadAsync(text, delegate(byte[] bytes)
+		SaveSlotPickerUI.Show(WorldSync.GetSlotSummaries(), delegate(int slotId)
 		{
-			_pendingLanStatusResult = ((bytes != null) ? Encoding.UTF8.GetString(bytes) : null);
-			_hasPendingLanStatus = true;
+			OnSlotChosen(slotId, isSteam: false, null, 0, 0uL);
 		});
-		_pendingHostIp = hostIp;
-		_pendingPort = port;
-		_statusTimer = 0f;
-		_waitingLanStatus = true;
-	}
-
-	private static void TickLanStatus()
-	{
-		if (!_waitingLanStatus)
-		{
-			return;
-		}
-		if (!_hasPendingLanStatus)
-		{
-			_statusTimer += Time.unscaledDeltaTime;
-			if (_statusTimer > 8f)
-			{
-				_waitingLanStatus = false;
-				Plugin.Log.LogInfo("[PrologueJoinSync] /status não respondeu a tempo - seguindo com o fluxo normal (download do mundo).");
-				LanSaveTransfer.BeginClientFetch(_pendingHostIp, _pendingPort);
-			}
-			return;
-		}
-		_waitingLanStatus = false;
-		string pendingLanStatusResult = _pendingLanStatusResult;
-		_hasPendingLanStatus = false;
-		_pendingLanStatusResult = null;
-		if (pendingLanStatusResult == "prologue")
-		{
-			Plugin.Log.LogInfo("[PrologueJoinSync] host (LAN) está no prólogo - pedindo pro jogador escolher onde salvar LOCALMENTE (sem baixar mundo).");
-			string hostIp = _pendingHostIp;
-			int port = _pendingPort;
-			SaveSlotPickerUI.Show(WorldSync.GetSlotSummaries(), delegate(int slotId)
-			{
-				OnSlotChosen(slotId, isSteam: false, hostIp, port, 0uL);
-			});
-		}
-		else
-		{
-			Plugin.Log.LogInfo("[PrologueJoinSync] host (LAN) não está no prólogo (status='" + pendingLanStatusResult + "') - seguindo com o fluxo normal (download do mundo).");
-			LanSaveTransfer.BeginClientFetch(_pendingHostIp, _pendingPort);
-		}
-	}
-
-	[MethodImpl(MethodImplOptions.NoInlining)]
-	public static bool TryJoinFriendSteam(CSteamID friendId)
-	{
-		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006c: Unknown result type (might be due to invalid IL or missing references)
-		if (!AutoJoin.ParseConnect(SteamFriends.GetFriendRichPresence(friendId, "connect"), out var hostId, out var url))
-		{
-			Plugin.Log.LogWarning($"[PrologueJoinSync] tentei entrar no amigo {friendId} mas ele não tem Rich Presence 'connect' publicada (não está hospedando agora?).");
-			return false;
-		}
-		SaveFetchServer.EnsureStarted();
-		if (SteamManager.Initialized)
-		{
-			SteamNetworking.AllowP2PPacketRelay(true);
-		}
-		_pendingSteamFriendId64 = friendId.m_SteamID;
-		_pendingSteamHostId = hostId;
-		_pendingSteamUrl = url;
-		_statusTimer = 0f;
-		_waitingSteamStatus = true;
-		SaveFetchServer.SendStatusRequest(friendId);
-		Plugin.Log.LogInfo($"[PrologueJoinSync] pergunta de status (P2P) enviada pro host {hostId} antes de decidir o fluxo de JOIN...");
-		return true;
-	}
-
-	[MethodImpl(MethodImplOptions.NoInlining)]
-	private static void TickSteamStatus()
-	{
-		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
-		if (!_waitingSteamStatus)
-		{
-			return;
-		}
-		if (SaveFetchServer.TryGetStatusResponse(out var isPrologue))
-		{
-			_waitingSteamStatus = false;
-			if (isPrologue)
-			{
-				Plugin.Log.LogInfo("[PrologueJoinSync] host (Steam) está no prólogo - pedindo pro jogador escolher onde salvar LOCALMENTE (sem baixar mundo).");
-				ulong hostId = _pendingSteamHostId;
-				SaveSlotPickerUI.Show(WorldSync.GetSlotSummaries(), delegate(int slotId)
-				{
-					OnSlotChosen(slotId, isSteam: true, null, 0, hostId);
-				});
-			}
-			else
-			{
-				Plugin.Log.LogInfo("[PrologueJoinSync] host (Steam) não está no prólogo - seguindo com o fluxo normal (download do mundo).");
-				AutoJoin.TryJoinFriend(new CSteamID(_pendingSteamFriendId64));
-			}
-		}
-		else
-		{
-			_statusTimer += Time.unscaledDeltaTime;
-			if (_statusTimer > 8f)
-			{
-				_waitingSteamStatus = false;
-				Plugin.Log.LogInfo("[PrologueJoinSync] pergunta de status (P2P) não respondeu a tempo - seguindo com o fluxo normal (download do mundo).");
-				AutoJoin.TryJoinFriend(new CSteamID(_pendingSteamFriendId64));
-			}
-		}
 	}
 
 	private static void OnSlotChosen(int slotId, bool isSteam, string hostIp, int port, ulong steamHostId)
 	{
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0062: Expected O, but got Unknown
 		Plugin.Log.LogInfo($"[PrologueJoinSync] jogador escolheu o slot {slotId} - forçando jogo novo (prólogo, sem pular).");
 		SaveManager instance = Singleton<SaveManager>.Instance;
 		UI instance2 = Singleton<UI>.Instance;
@@ -235,7 +118,7 @@ public static class PrologueJoinSync
 		{
 			_pendingConnect = false;
 			Plugin.Log.LogInfo("[PrologueJoinSync] mundo novo carregado - conectando a sessão automaticamente.");
-			if ((Object)(object)Plugin.Instance != (Object)null && (_pendingIsSteam ? Plugin.Instance.StartClientSessionWith(_pendingSteamConnectId) : Plugin.Instance.StartClientSessionLan()))
+			if (JoinFlow.OnWorldLoaded())
 			{
 				LanSaveTransfer.SetDoneExternal();
 				return;
@@ -254,11 +137,6 @@ public static class PrologueJoinSync
 	public static void Tick()
 	{
 		TickPendingConnect();
-		TickLanStatus();
-		if (_waitingSteamStatus)
-		{
-			TickSteamStatus();
-		}
 	}
 
 	public static void Reset()

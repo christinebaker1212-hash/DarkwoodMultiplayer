@@ -52,14 +52,11 @@ public static class NightEventSync
 
 	public static void SetPeerPosition(Vector3 pos)
 	{
-		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
 		_peerPos = pos;
 	}
 
 	private static bool IsCoLocatedWithPeer()
 	{
-		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0036: Unknown result type (might be due to invalid IL or missing references)
 		if (!_peerPos.HasValue || (Object)(object)Player.Instance == (Object)null)
 		{
 			return false;
@@ -75,14 +72,6 @@ public static class NightEventSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005d: Expected O, but got Unknown
-		//IL_005d: Expected O, but got Unknown
-		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0092: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -181,7 +170,6 @@ public static class NightEventSync
 
 	private static void TickApplyRetry()
 	{
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
 		if (_pendingApplies == null || _pendingApplies.Count == 0 || Time.time < _nextApplyRetryAt)
 		{
 			return;
@@ -204,11 +192,6 @@ public static class NightEventSync
 
 	private static void Postfix(CustomEvent __instance, bool force)
 	{
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0061: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0099: Unknown result type (might be due to invalid IL or missing references)
 		if (!_applyingRemote && CoopRuntime.SessionActive)
 		{
 			string name = ((Object)((Component)__instance).gameObject).name;
@@ -226,11 +209,6 @@ public static class NightEventSync
 
 	public static void ApplyFire(PacketReader r)
 	{
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
 		string text = r.Str();
 		Vector3 pos = r.Vec3();
 		int num = r.Int();
@@ -264,12 +242,6 @@ public static class NightEventSync
 
 	private static bool TryApplyLocationEvent(string name, Vector3 pos, int type, string value)
 	{
-		//IL_0121: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0126: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02e2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0305: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0092: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0097: Unknown result type (might be due to invalid IL or missing references)
 		CustomEvent val = null;
 		float num = float.MaxValue;
 		List<NightScenario> list = (((Object)(object)Singleton<NightScenarios>.Instance != (Object)null) ? Singleton<NightScenarios>.Instance.scenarios : null);
@@ -373,8 +345,6 @@ public static class NightEventSync
 
 	private static void MarkStartedOnly(CustomEvent ce)
 	{
-		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
 		ce.timeStarted = Singleton<Controller>.Instance.CurrentTimeAndDay;
 		for (int i = 0; i < ce.categories.Count; i++)
 		{

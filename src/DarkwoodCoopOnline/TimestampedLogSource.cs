@@ -27,7 +27,6 @@ internal sealed class TimestampedLogSource
 
 	private void Enqueue(LogLevel level, object data)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
 		_queue.Enqueue((level, Prefix(data)));
 	}
 
@@ -63,7 +62,6 @@ internal sealed class TimestampedLogSource
 
 	private void WriterLoop()
 	{
-		//IL_001a: Unknown result type (might be due to invalid IL or missing references)
 		while (true)
 		{
 			bool flag = false;

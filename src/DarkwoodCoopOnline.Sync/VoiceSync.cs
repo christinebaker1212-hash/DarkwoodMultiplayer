@@ -70,25 +70,15 @@ public static class VoiceSync
 
 	private static float _alertDiagNextLogAt = float.MinValue;
 
-	private static GameObject _playbackGO;
 
-	private static AudioSource _playbackSource;
 
-	private static AudioClip _playbackClip;
 
-	private static AudioReverbFilter _reverbFilter;
 
-	private static AudioLowPassFilter _lowPassFilter;
 
-	private static readonly object _ringLock = new object();
 
-	private static float[] _ring;
 
-	private static int _ringWrite;
 
-	private static int _ringRead;
 
-	private static int _ringCount;
 
 	public static bool AlertEnabled { get; set; }
 
@@ -277,47 +267,96 @@ public static class VoiceSync
 		}
 	}
 
+	// One playback chain per remote player: their own 3D AudioSource on their puppet, ring buffer and filters
+	private sealed class Speaker
+	{
+		public int Slot;
+
+		public GameObject Go;
+
+		public AudioSource Source;
+
+		public AudioClip Clip;
+
+		public AudioReverbFilter Reverb;
+
+		public AudioLowPassFilter LowPass;
+
+		public readonly object RingLock = new object();
+
+		public readonly float[] Ring = new float[32000];
+
+		public int RingWrite;
+
+		public int RingRead;
+
+		public int RingCount;
+
+		public float OcclusionTimer;
+
+		public bool Occluded;
+
+		public int PacketsThisWindow;
+
+		public long BytesThisWindow;
+
+		public void OnAudioRead(float[] data)
+		{
+			lock (RingLock)
+			{
+				int num = Mathf.Min(data.Length, RingCount);
+				for (int i = 0; i < num; i++)
+				{
+					data[i] = Ring[RingRead];
+					RingRead = (RingRead + 1) % Ring.Length;
+				}
+				RingCount -= num;
+				for (int j = num; j < data.Length; j++)
+				{
+					data[j] = 0f;
+				}
+			}
+		}
+	}
+
+	private static readonly Dictionary<int, Speaker> _speakers = new Dictionary<int, Speaker>();
+
 	public static void ApplyVoiceData(PacketReader r, RemotePlayerPuppet peerPuppet)
 	{
-		//IL_0175: Unknown result type (might be due to invalid IL or missing references)
 		byte[] array = r.Bytes();
-		if (array.Length == 0)
+		if (array.Length == 0 || (Object)(object)peerPuppet == (Object)null)
 		{
 			return;
 		}
-		bool flag = (Object)(object)_playbackSource == (Object)null;
-		EnsurePlayback(((Object)(object)peerPuppet != (Object)null) ? ((Component)peerPuppet).transform : null);
-		if ((Object)(object)_playbackSource == (Object)null)
+		Speaker speaker = EnsurePlayback(peerPuppet);
+		if (speaker == null)
 		{
 			return;
-		}
-		if (flag)
-		{
-			Plugin.Log.LogInfo("[VoiceSync][diag] 1º pacote de voz do peer recebido - AudioSource criado no puppet.");
 		}
 		int num = array.Length / 2;
 		short[] array2 = new short[num];
-		Buffer.BlockCopy(array, 0, array2, 0, array.Length);
+		Buffer.BlockCopy(array, 0, array2, 0, num * 2);
 		float num2 = 0f;
-		lock (_ringLock)
+		lock (speaker.RingLock)
 		{
+			float[] ring = speaker.Ring;
 			for (int i = 0; i < num; i++)
 			{
 				float num3 = (float)array2[i] / 32767f;
 				num2 += num3 * num3;
-				_ring[_ringWrite] = num3;
-				_ringWrite = (_ringWrite + 1) % _ring.Length;
-				if (_ringCount < _ring.Length)
+				ring[speaker.RingWrite] = num3;
+				speaker.RingWrite = (speaker.RingWrite + 1) % ring.Length;
+				if (speaker.RingCount < ring.Length)
 				{
-					_ringCount++;
+					speaker.RingCount++;
 				}
 				else
 				{
-					_ringRead = (_ringRead + 1) % _ring.Length;
+					speaker.RingRead = (speaker.RingRead + 1) % ring.Length;
 				}
 			}
 		}
-		if (AlertEnabled && (Object)(object)peerPuppet != (Object)null && num > 0)
+		if (AlertEnabled && num > 0)
 		{
 			float num5 = (LastAlertRms = Mathf.Sqrt(num2 / (float)num));
 			float num6 = Mathf.Clamp01((num5 - 0.004f) / (LoudVoiceRms - 0.004f));
@@ -326,127 +365,110 @@ public static class VoiceSync
 			{
 				Character.alertInArea(((Component)peerPuppet).transform.position, num7, false, 1f, false);
 			}
-			if (Time.time >= _alertDiagNextLogAt)
-			{
-				_alertDiagNextLogAt = Time.time + 2f;
-				Plugin.Log.LogInfo($"[VoiceSync][diag] alerta por voz: rms={num5:F4} raio={num7:F0} limiar={LoudVoiceRms:F3}");
-			}
 		}
-		_recvDiagPacketsThisWindow++;
-		_recvDiagBytesThisWindow += array.Length;
+		speaker.PacketsThisWindow++;
+		speaker.BytesThisWindow += array.Length;
 	}
 
-	public static void Tick(RemotePlayerPuppet peerPuppet)
+	public static void Tick(IReadOnlyList<RemotePlayerPuppet> puppets)
 	{
-		//IL_0170: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0176: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01cd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01de: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0200: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0202: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0204: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0209: Unknown result type (might be due to invalid IL or missing references)
-		//IL_020b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_020d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_020f: Unknown result type (might be due to invalid IL or missing references)
-		Transform val = (((Object)(object)peerPuppet != (Object)null) ? ((Component)peerPuppet).transform : null);
-		if (Time.time >= _recvDiagNextLogAt)
+		bool flag = Time.time >= _recvDiagNextLogAt;
+		if (flag)
 		{
-			_recvDiagNextLogAt = Time.time + 2f;
-			if (_recvDiagPacketsThisWindow > 0 || (Object)(object)_playbackSource != (Object)null)
-			{
-				float num = (((Object)(object)val != (Object)null && (Object)(object)Player.Instance != (Object)null) ? Vector3.Distance(((Component)Player.Instance).transform.position, val.position) : (-1f));
-				Plugin.Log.LogInfo($"[VoiceSync][diag] recebido: pacotes={_recvDiagPacketsThisWindow} bytes={_recvDiagBytesThisWindow} " + string.Format("volumeAtual={0} distPeer={1:F0} ", ((Object)(object)_playbackSource != (Object)null) ? _playbackSource.volume.ToString("F2") : "n/a", num) + $"dentro={((CharBase)peerPuppet)?.isInside} abafado={(Object)(object)_lowPassFilter != (Object)null && ((Behaviour)_lowPassFilter).enabled}");
-			}
-			_recvDiagPacketsThisWindow = 0;
-			_recvDiagBytesThisWindow = 0L;
+			_recvDiagNextLogAt = Time.time + 10f;
 		}
-		if ((Object)(object)_playbackSource == (Object)null || (Object)(object)val == (Object)null || (Object)(object)Player.Instance == (Object)null)
+		Player instance = Player.Instance;
+		if ((Object)(object)instance == (Object)null)
 		{
 			return;
 		}
-		float num2 = Vector3.Distance(((Component)Player.Instance).transform.position, val.position);
-		float num3 = 1f - Mathf.Clamp01((num2 - 300f) / 1200f);
-		((CharBase)peerPuppet).checkGround();
-		if ((Object)(object)_reverbFilter != (Object)null)
+		for (int i = 0; i < puppets.Count; i++)
 		{
-			((Behaviour)_reverbFilter).enabled = ((CharBase)peerPuppet).isInside;
-		}
-		bool flag = false;
-		if ((Object)(object)_lowPassFilter != (Object)null)
-		{
-			Vector3 position = val.position;
-			Vector3 position2 = ((Component)Player.Instance).transform.position;
-			float num4 = Core.trueDistance(position, position2);
-			if (num4 <= 0f)
+			RemotePlayerPuppet remotePlayerPuppet = puppets[i];
+			if ((Object)(object)remotePlayerPuppet == (Object)null || !_speakers.TryGetValue(remotePlayerPuppet.Slot, out var value) || (Object)(object)value.Source == (Object)null)
 			{
-				num4 = 1f;
+				continue;
 			}
-			Vector3 val2 = position2 - position;
-			RaycastHit val3 = default(RaycastHit);
-			flag = Physics.Raycast(new Ray(position, val2), out val3, num4, 32769);
-			((Behaviour)_lowPassFilter).enabled = flag;
-			if (flag)
+			Transform transform = ((Component)remotePlayerPuppet).transform;
+			float num = Vector3.Distance(((Component)instance).transform.position, transform.position);
+			if (flag && value.PacketsThisWindow > 0)
 			{
-				_lowPassFilter.cutoffFrequency = 1500f;
+				Plugin.Log.LogInfo($"[VoiceSync] '{remotePlayerPuppet.PeerName}': {value.PacketsThisWindow} packets / {value.BytesThisWindow} bytes in 10s, dist={num:F0}");
+				value.PacketsThisWindow = 0;
+				value.BytesThisWindow = 0L;
 			}
-		}
-		_playbackSource.volume = (flag ? (num3 * 0.75f) : num3);
-	}
-
-	private static void EnsurePlayback(Transform peerTransform)
-	{
-		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0047: Expected O, but got Unknown
-		//IL_0062: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00eb: Expected O, but got Unknown
-		if (!((Object)(object)_playbackSource != (Object)null) && !((Object)(object)peerTransform == (Object)null))
-		{
-			_ring = new float[32000];
-			_ringWrite = (_ringRead = (_ringCount = 0));
-			_playbackGO = new GameObject("VoiceChatPlayback");
-			_playbackGO.transform.SetParent(peerTransform, false);
-			_playbackGO.transform.localPosition = Vector3.zero;
-			_playbackSource = _playbackGO.AddComponent<AudioSource>();
-			_playbackSource.spatialBlend = 1f;
-			_playbackSource.rolloffMode = (AudioRolloffMode)1;
-			_playbackSource.minDistance = 1f;
-			_playbackSource.maxDistance = 100000f;
-			_playbackSource.loop = true;
-			_playbackSource.playOnAwake = false;
-			_playbackClip = AudioClip.Create("VoicePeer", 16000, 1, 16000, true, new AudioClip.PCMReaderCallback(OnAudioRead));
-			_playbackSource.clip = _playbackClip;
-			_playbackSource.Play();
-			_reverbFilter = _playbackGO.AddComponent<AudioReverbFilter>();
-			((Behaviour)_reverbFilter).enabled = false;
-			_lowPassFilter = _playbackGO.AddComponent<AudioLowPassFilter>();
-			_lowPassFilter.cutoffFrequency = 1500f;
-			((Behaviour)_lowPassFilter).enabled = false;
+			float num2 = 1f - Mathf.Clamp01((num - 300f) / 1200f);
+			((CharBase)remotePlayerPuppet).checkGround();
+			if ((Object)(object)value.Reverb != (Object)null)
+			{
+				((Behaviour)value.Reverb).enabled = ((CharBase)remotePlayerPuppet).isInside;
+			}
+			// walls muffle the voice; the raycast only runs 10 times a second per speaker
+			value.OcclusionTimer -= Time.unscaledDeltaTime;
+			if ((Object)(object)value.LowPass != (Object)null && value.OcclusionTimer <= 0f)
+			{
+				value.OcclusionTimer = 0.1f;
+				Vector3 position = transform.position;
+				Vector3 position2 = ((Component)instance).transform.position;
+				float num3 = Core.trueDistance(position, position2);
+				if (num3 <= 0f)
+				{
+					num3 = 1f;
+				}
+				RaycastHit val = default(RaycastHit);
+				value.Occluded = Physics.Raycast(new Ray(position, position2 - position), out val, num3, 32769);
+				((Behaviour)value.LowPass).enabled = value.Occluded;
+				if (value.Occluded)
+				{
+					value.LowPass.cutoffFrequency = 1500f;
+				}
+			}
+			value.Source.volume = (value.Occluded ? (num2 * 0.75f) : num2);
 		}
 	}
 
-	private static void OnAudioRead(float[] data)
+	private static Speaker EnsurePlayback(RemotePlayerPuppet puppet)
 	{
-		lock (_ringLock)
+		if (_speakers.TryGetValue(puppet.Slot, out var value) && (Object)(object)value.Go != (Object)null)
 		{
-			int num = Mathf.Min(data.Length, _ringCount);
-			for (int i = 0; i < num; i++)
+			return value;
+		}
+		value = new Speaker
+		{
+			Slot = puppet.Slot
+		};
+		value.Go = new GameObject("VoiceChatPlayback_" + puppet.Slot);
+		value.Go.transform.SetParent(((Component)puppet).transform, false);
+		value.Go.transform.localPosition = Vector3.zero;
+		value.Source = value.Go.AddComponent<AudioSource>();
+		value.Source.spatialBlend = 1f;
+		value.Source.rolloffMode = (AudioRolloffMode)1;
+		value.Source.minDistance = 1f;
+		value.Source.maxDistance = 100000f;
+		value.Source.loop = true;
+		value.Source.playOnAwake = false;
+		value.Clip = AudioClip.Create("VoicePeer" + puppet.Slot, 16000, 1, 16000, true, new AudioClip.PCMReaderCallback(value.OnAudioRead));
+		value.Source.clip = value.Clip;
+		value.Source.Play();
+		value.Reverb = value.Go.AddComponent<AudioReverbFilter>();
+		((Behaviour)value.Reverb).enabled = false;
+		value.LowPass = value.Go.AddComponent<AudioLowPassFilter>();
+		value.LowPass.cutoffFrequency = 1500f;
+		((Behaviour)value.LowPass).enabled = false;
+		_speakers[puppet.Slot] = value;
+		Plugin.Log.LogInfo($"[VoiceSync] first voice packet from '{puppet.PeerName}' - speaker created on their puppet.");
+		return value;
+	}
+
+	public static void OnPeerLeft(int slot)
+	{
+		if (_speakers.TryGetValue(slot, out var value))
+		{
+			if ((Object)(object)value.Go != (Object)null)
 			{
-				data[i] = _ring[_ringRead];
-				_ringRead = (_ringRead + 1) % _ring.Length;
+				Object.Destroy((Object)(object)value.Go);
 			}
-			_ringCount -= num;
-			for (int j = num; j < data.Length; j++)
-			{
-				data[j] = 0f;
-			}
+			_speakers.Remove(slot);
 		}
 	}
 
@@ -458,15 +480,14 @@ public static class VoiceSync
 		_diagBytesSent = 0L;
 		_recvDiagPacketsThisWindow = 0;
 		_recvDiagBytesThisWindow = 0L;
-		if ((Object)(object)_playbackGO != (Object)null)
+		foreach (Speaker value in _speakers.Values)
 		{
-			Object.Destroy((Object)(object)_playbackGO);
+			if ((Object)(object)value.Go != (Object)null)
+			{
+				Object.Destroy((Object)(object)value.Go);
+			}
 		}
-		_playbackGO = null;
-		_playbackSource = null;
-		_playbackClip = null;
-		_reverbFilter = null;
-		_lowPassFilter = null;
+		_speakers.Clear();
 		IsSpeaking = false;
 	}
 }

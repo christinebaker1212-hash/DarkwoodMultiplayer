@@ -51,18 +51,6 @@ public static class CharacterSaveSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Expected O, but got Unknown
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0063: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0071: Expected O, but got Unknown
-		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0099: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a7: Expected O, but got Unknown
-		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00dc: Expected O, but got Unknown
 		Harmony val = new Harmony(modId);
 		val.Patch((MethodBase)AccessTools.Method(typeof(Player), "upgradeHealth", (Type[])null, (Type[])null), new HarmonyMethod(typeof(CharacterSaveSync), "HealthUpgradePrefix", (Type[])null), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
 		val.Patch((MethodBase)AccessTools.Method(typeof(Player), "upgradeStamina", (Type[])null, (Type[])null), new HarmonyMethod(typeof(CharacterSaveSync), "StaminaUpgradePrefix", (Type[])null), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
@@ -255,12 +243,6 @@ public static class CharacterSaveSync
 
 	public static byte[] BuildUpload()
 	{
-		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0025: Expected O, but got Unknown
-		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003a: Expected O, but got Unknown
-		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004f: Expected O, but got Unknown
 		if ((Object)(object)Player.Instance == (Object)null)
 		{
 			return null;

@@ -13,12 +13,6 @@ public static class PlayerDamageSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Expected O, but got Unknown
-		//IL_00ba: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c7: Expected O, but got Unknown
-		//IL_00f0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fd: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -51,23 +45,24 @@ public static class PlayerDamageSync
 
 	public static void ApplyShadowHit()
 	{
-		CoopRuntime.Session?.Puppet?.PlayHitReaction();
+		CoopPeers.SenderPuppet?.PlayHitReaction();
 	}
 
 	private static void Postfix(CharBase __instance, float damage, bool normalHit)
 	{
-		if (__instance is RemotePlayerPuppet)
+		if (__instance is RemotePlayerPuppet remotePlayerPuppet)
 		{
-			RelayHit(damage, normalHit);
+			RelayHit(damage, normalHit, remotePlayerPuppet.Slot);
 		}
 	}
 
-	public static void RelayHit(float damage, bool normalHit)
+	// The hit lands on the player whose puppet took it, on their own PC
+	public static void RelayHit(float damage, bool normalHit, int targetSlot)
 	{
 		if (!(damage <= 0f) && CoopRuntime.SessionActive)
 		{
 			Plugin.Log.LogInfo($"[PlayerDamage] puppet local levou {damage} (normalHit={normalHit}) — repassando pro peer.");
-			CoopRuntime.Session?.SendReliable(PacketWriter.Begin(PacketType.PlayerDamage).Float(damage).Bool(normalHit)
+			CoopRuntime.Session?.SendTo(targetSlot, PacketWriter.Begin(PacketType.PlayerDamage).Float(damage).Bool(normalHit)
 				.Finish());
 		}
 	}

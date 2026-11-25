@@ -54,19 +54,6 @@ public static class LegsDiagnostics
 
 	private static void DumpPart(string tag, tk2dSpriteAnimator a)
 	{
-		//IL_03cb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03d0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03ef: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03f4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03f8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03fd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_041c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0421: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02cc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02d1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0391: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0351: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0374: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)a == (Object)null)
 		{
 			Plugin.Log.LogInfo("[LegsDiag] " + tag + ": (null)");
@@ -136,15 +123,6 @@ public static class LegsDiagnostics
 
 	private static void DumpShaderProps(string tag, Material mat)
 	{
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0059: Expected I4, but got Unknown
-		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010c: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)mat == (Object)null || (Object)(object)mat.shader == (Object)null)
 		{
 			return;
@@ -190,8 +168,6 @@ public static class LegsDiagnostics
 
 	private static void DumpTree(Transform t, int depth)
 	{
-		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c0: Expected O, but got Unknown
 		List<string> list = new List<string>();
 		Component[] components = ((Component)t).GetComponents<Component>();
 		foreach (Component val in components)
@@ -237,12 +213,6 @@ public static class LegsDiagnostics
 
 	private static void LogLine(string tag, tk2dSpriteAnimator legs)
 	{
-		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0133: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)legs == (Object)null)
 		{
 			return;

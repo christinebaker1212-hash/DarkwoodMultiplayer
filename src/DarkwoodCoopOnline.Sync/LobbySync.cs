@@ -35,7 +35,27 @@ public static class LobbySync
 
 	public static bool LocalIntroDone { get; private set; }
 
-	public static bool PeerIntroDone { get; private set; }
+	// slots of the other players whose prologue intro is over
+	private static readonly System.Collections.Generic.HashSet<int> _introDone = new System.Collections.Generic.HashSet<int>();
+
+	// everyone else in the world has finished the intro
+	public static bool PeerIntroDone
+	{
+		get
+		{
+			foreach (RemotePlayerPuppet puppet in CoopPeers.Puppets)
+			{
+				if ((Object)(object)puppet != (Object)null && !_introDone.Contains(puppet.Slot))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+
+	// The host pressed start (players joining after this skip the lobby)
+	public static bool Started { get; private set; }
 
 	private static bool BothIntroDoneIfNeeded()
 	{
@@ -57,7 +77,8 @@ public static class LobbySync
 		PeerConnected = false;
 		PauseSync.LobbyHold = true;
 		LocalIntroDone = false;
-		PeerIntroDone = false;
+		_introDone.Clear();
+		Started = false;
 		LampSync.PreRegisterAll();
 		FurnitureSync.PreRegisterAll();
 		Plugin.Log.LogInfo($"[LobbySync] lobby iniciado (isHost={isHost}) - segurando pausa até o peer conectar" + (isHost ? " e eu dar Start." : "."));
@@ -68,7 +89,6 @@ public static class LobbySync
 		if (IsActive && !PeerConnected)
 		{
 			PeerConnected = true;
-			SaveFetchServer.ClearPeerJoinStatus();
 			LanSaveTransfer.ClearHostPeerStatus();
 			Plugin.Log.LogInfo("[LobbySync] peer conectado - " + (IsHost ? "botão Start liberado." : "aguardando o host dar Start."));
 			if (LocalIntroDone)
@@ -96,12 +116,20 @@ public static class LobbySync
 		CoopRuntime.Session?.SendReliable(PacketWriter.Begin(PacketType.PrologueIntroReady).Finish());
 	}
 
-	public static void ApplyPeerIntroDone()
+	public static void ApplyPeerIntroDone(int from)
 	{
-		if (!PeerIntroDone)
+		if (_introDone.Add(from))
 		{
-			PeerIntroDone = true;
-			Plugin.Log.LogInfo("[LobbySync] peer avisou que a intro dele do prólogo terminou.");
+			Plugin.Log.LogInfo($"[LobbySync] '{CoopPeers.NameOf(from)}' finished the prologue intro.");
+		}
+	}
+
+	public static void OnPeerLeft(int slot)
+	{
+		_introDone.Remove(slot);
+		if (IsActive && CoopPeers.Count == 0)
+		{
+			PeerConnected = false;
 		}
 	}
 
@@ -115,7 +143,7 @@ public static class LobbySync
 		}
 	}
 
-	private static void ReconcileAll()
+	public static void ReconcileAll()
 	{
 		Plugin.Log.LogInfo("[LobbySync] HOST reconciliando estado do mundo pro cliente (o que mexi durante a espera).");
 		LampSync.ForceRebroadcast();
@@ -173,6 +201,7 @@ public static class LobbySync
 
 	private static void Complete()
 	{
+		Started = true;
 		if (IsActive)
 		{
 			IsActive = false;
@@ -187,14 +216,12 @@ public static class LobbySync
 		PeerConnected = false;
 		IsHost = false;
 		LocalIntroDone = false;
-		PeerIntroDone = false;
+		_introDone.Clear();
+		Started = false;
 	}
 
 	public static void Draw()
 	{
-		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ff: Unknown result type (might be due to invalid IL or missing references)
 		if (!IsActive)
 		{
 			return;
@@ -209,40 +236,22 @@ public static class LobbySync
 		string text;
 		if (PeerConnected)
 		{
-			text = ((!BothIntroDoneIfNeeded()) ? ((!LocalIntroDone) ? "Watching the prologue intro..." : "Waiting for the other player to finish the prologue intro...") : ((!IsHost) ? "Waiting for the host to start the game..." : $"Press [{(object)(KeyCode)102}] to start the game!"));
+			text = ((!BothIntroDoneIfNeeded()) ? ((!LocalIntroDone) ? "Watching the prologue intro..." : "Waiting for the other player to finish the prologue intro...") : ((!IsHost) ? "Waiting for the host to start the game..." : $"{CoopRuntime.Session?.PlayersInGame ?? 1}/{Proto.MaxPlayers} players here - press [{(object)(KeyCode)102}] to start!\n(more friends can still join after you start)"));
 		}
 		else
 		{
-			string text2 = SaveFetchServer.PeerJoinStatus;
+			string text2 = "";
 			if (string.IsNullOrEmpty(text2))
 			{
 				text2 = LanSaveTransfer.HostPeerStatus;
 			}
-			text = (string.IsNullOrEmpty(text2) ? "Waiting for player..." : text2);
+			text = (string.IsNullOrEmpty(text2) ? ("Waiting for players..." + (string.IsNullOrEmpty(HostFlow.InviteLine) ? "" : ("\n" + HostFlow.InviteLine))) : text2);
 		}
 		GUI.Label(new Rect(num + 10f, num3, 400f, 44f), text, _hintStyle);
 	}
 
 	private static void EnsureStyles()
 	{
-		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0010: Expected O, but got Unknown
-		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004d: Expected O, but got Unknown
-		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0077: Expected O, but got Unknown
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0095: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b5: Expected O, but got Unknown
-		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
 		if (_boxStyle == null)
 		{
 			Texture2D val = new Texture2D(1, 1);

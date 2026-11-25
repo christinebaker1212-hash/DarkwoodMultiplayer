@@ -30,8 +30,6 @@ public static class FurnitureDiagnostics
 
 	public static void Record(string name, Vector3 pos, bool frozen, bool remoteOwned, bool moved, bool claimedByMe, bool beingDragged)
 	{
-		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
 		if (_ring.Count >= 400)
 		{
 			_ring.Dequeue();
@@ -51,8 +49,6 @@ public static class FurnitureDiagnostics
 
 	public static void Dump()
 	{
-		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
 		Plugin.Log.LogInfo($"========================= [FurnDiag] DUMP ({_ring.Count} entradas) =========================");
 		foreach (Entry item in _ring)
 		{

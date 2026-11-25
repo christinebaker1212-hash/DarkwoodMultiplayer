@@ -53,19 +53,16 @@ public sealed class PacketReader
 
 	public Vector3 Vec2XZ(float y)
 	{
-		//IL_0017: Unknown result type (might be due to invalid IL or missing references)
 		return new Vector3(_br.ReadSingle(), y, _br.ReadSingle());
 	}
 
 	public Vector3 Vec3()
 	{
-		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
 		return new Vector3(_br.ReadSingle(), _br.ReadSingle(), _br.ReadSingle());
 	}
 
 	public Quaternion Quat()
 	{
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
 		return new Quaternion(_br.ReadSingle(), _br.ReadSingle(), _br.ReadSingle(), _br.ReadSingle());
 	}
 }

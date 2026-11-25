@@ -24,12 +24,6 @@ public static class ThrownItemSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0049: Expected O, but got Unknown
-		//IL_0090: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009d: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -45,13 +39,6 @@ public static class ThrownItemSync
 
 	private static void CollidePostfix(ThrownItem __instance)
 	{
-		//IL_0095: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00da: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)__instance == (Object)null)
 		{
 			return;
@@ -116,16 +103,6 @@ public static class ThrownItemSync
 
 	public static byte[] PollSettled()
 	{
-		//IL_0138: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0127: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0173: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0183: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0190: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0198: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01f0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0201: Unknown result type (might be due to invalid IL or missing references)
 		if (_pending.Count == 0)
 		{
 			return null;
@@ -184,14 +161,6 @@ public static class ThrownItemSync
 
 	public static void ApplyLanded(PacketReader r)
 	{
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0107: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0108: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0213: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0259: Unknown result type (might be due to invalid IL or missing references)
 		int num = r.UShort();
 		for (int i = 0; i < num; i++)
 		{
@@ -244,7 +213,6 @@ public static class ThrownItemSync
 			GameObject rbCleanupGo = val5;
 			Singleton<Controller>.Instance.waitFramesAndRun((Action)delegate
 			{
-				//IL_0033: Unknown result type (might be due to invalid IL or missing references)
 				if (!((Object)(object)rbCleanupItem == (Object)null) && !((Object)(object)rbCleanupGo == (Object)null))
 				{
 					Rigidbody component3 = rbCleanupGo.GetComponent<Rigidbody>();

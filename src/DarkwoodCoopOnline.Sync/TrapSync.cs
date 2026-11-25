@@ -32,7 +32,6 @@ public static class TrapSync
 
 	private static Info GetInfo(Trigger t)
 	{
-		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
 		if (!_traps.TryGetValue(t, out var value))
 		{
 			value = new Info
@@ -50,15 +49,11 @@ public static class TrapSync
 
 	public static byte[] PollChanges(Vector3 p1, Vector3 p2)
 	{
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
 		List<KeyValuePair<string, bool>> list = null;
 		Trigger[] array = Scene();
 		foreach (Trigger val in array)
 		{
-			if ((Object)(object)val == (Object)null || Mathf.Min(Vector3.Distance(((Component)val).transform.position, p1), Vector3.Distance(((Component)val).transform.position, p2)) > 4000f)
+			if ((Object)(object)val == (Object)null || CoopPeers.MinDistance(((Component)val).transform.position, p1) > 4000f)
 			{
 				continue;
 			}
@@ -171,8 +166,6 @@ public static class TrapSync
 
 	private static string Key(Vector3 p)
 	{
-		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
 		return $"{Mathf.RoundToInt(p.x)}_{Mathf.RoundToInt(p.z)}";
 	}
 

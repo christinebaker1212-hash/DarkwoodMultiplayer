@@ -14,18 +14,11 @@ public static class ConstructibleSync
 
 	public static byte[] PollChanges(Vector3 p1, Vector3 p2)
 	{
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0125: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c7: Unknown result type (might be due to invalid IL or missing references)
 		List<(string, Vector3, int)> list = null;
 		Constructible[] array = SceneCache.Constructibles();
 		foreach (Constructible val in array)
 		{
-			if ((Object)(object)val == (Object)null || Mathf.Min(Vector3.Distance(((Component)val).transform.position, p1), Vector3.Distance(((Component)val).transform.position, p2)) > 4000f)
+			if ((Object)(object)val == (Object)null || CoopPeers.MinDistance(((Component)val).transform.position, p1) > 4000f)
 			{
 				continue;
 			}
@@ -58,10 +51,6 @@ public static class ConstructibleSync
 
 	public static void ApplyChanges(PacketReader r)
 	{
-		//IL_0016: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
 		int num = r.UShort();
 		for (int i = 0; i < num; i++)
 		{
@@ -84,8 +73,6 @@ public static class ConstructibleSync
 
 	private static Constructible FindNearest(string name, Vector3 pos)
 	{
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
 		Constructible result = null;
 		float num = 250f;
 		Constructible[] array = SceneCache.Constructibles();
@@ -106,8 +93,6 @@ public static class ConstructibleSync
 
 	private static string KeyOf(string name, Vector3 p)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0016: Unknown result type (might be due to invalid IL or missing references)
 		return $"{name}@{Mathf.RoundToInt(p.x)}_{Mathf.RoundToInt(p.z)}";
 	}
 

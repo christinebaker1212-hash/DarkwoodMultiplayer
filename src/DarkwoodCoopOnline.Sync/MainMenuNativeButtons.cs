@@ -124,15 +124,6 @@ public static class MainMenuNativeButtons
 
 	private static void DumpGameObject(GameObject go)
 	{
-		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00aa: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0175: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01be: Unknown result type (might be due to invalid IL or missing references)
-		//IL_033c: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)go == (Object)null)
 		{
 			Plugin.Log.LogInfo("[MainMenuNativeButtons][Diag]   (GameObject null)");
@@ -184,10 +175,6 @@ public static class MainMenuNativeButtons
 
 	private static void Build(MainMenu mm)
 	{
-		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01ac: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01dc: Unknown result type (might be due to invalid IL or missing references)
 		GameObject optionsBtn = mm.optionsBtn;
 		if ((Object)(object)optionsBtn == (Object)null || mm.controllerButtons == null)
 		{
@@ -249,9 +236,6 @@ public static class MainMenuNativeButtons
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0048: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -318,15 +302,6 @@ public static class MainMenuNativeButtons
 
 	private static Button CloneButton(GameObject template, string goName, string label, Vector2 offsetDelta, Action onFire)
 	{
-		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0036: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = Object.Instantiate<GameObject>(template, template.transform.parent);
 		((Object)val).name = goName;
 		PositionMe component = val.GetComponent<PositionMe>();
@@ -399,12 +374,6 @@ public static class MainMenuNativeButtons
 
 	private static tk2dSpriteCollectionData BuildLabelCollection(string label)
 	{
-		//IL_00ba: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c0: Expected O, but got Unknown
-		//IL_0139: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0165: Unknown result type (might be due to invalid IL or missing references)
-		//IL_016a: Unknown result type (might be due to invalid IL or missing references)
 		string text = "DarkwoodCoopOnline.assets." + label + ".png";
 		byte[] array = null;
 		try
@@ -452,18 +421,6 @@ public static class MainMenuNativeButtons
 
 	private static void EnsureColliders()
 	{
-		//IL_0097: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ba: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bf: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00dc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ed: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fe: Unknown result type (might be due to invalid IL or missing references)
 		if (_colliderGuardFrames <= 0)
 		{
 			return;

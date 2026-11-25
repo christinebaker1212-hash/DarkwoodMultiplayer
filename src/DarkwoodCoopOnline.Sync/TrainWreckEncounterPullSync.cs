@@ -13,9 +13,6 @@ public static class TrainWreckEncounterPullSync
 
 	public static void Tick()
 	{
-		//IL_009e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00aa: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010f: Unknown result type (might be due to invalid IL or missing references)
 		Controller instance = Singleton<Controller>.Instance;
 		bool flag = (Object)(object)instance != (Object)null && instance.playingCutscene && (Object)(object)instance.currentCutsceneManager != (Object)null && ((Object)((Component)instance.currentCutsceneManager).gameObject).name == "trainWreck_startCutscene";
 		bool num = flag && !_wasPlaying;

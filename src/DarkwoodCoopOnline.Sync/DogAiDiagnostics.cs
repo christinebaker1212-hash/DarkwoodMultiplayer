@@ -49,12 +49,6 @@ public static class DogAiDiagnostics
 
 	public static void Tick()
 	{
-		//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00dc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
 		if (!_streaming)
 		{
 			return;
@@ -88,12 +82,6 @@ public static class DogAiDiagnostics
 
 	private static void Dump(Character dog, string tag)
 	{
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0063: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0118: Unknown result type (might be due to invalid IL or missing references)
 		Player instance = Player.Instance;
 		Transform val = (((Object)(object)RemotePlayerPuppet.DebugTorso != (Object)null) ? ((Component)RemotePlayerPuppet.DebugTorso).transform : null);
 		float num = (((Object)(object)instance != (Object)null) ? Vector3.Distance(((Component)dog).transform.position, ((Component)instance).transform.position) : (-1f));
@@ -105,7 +93,6 @@ public static class DogAiDiagnostics
 
 	public static void CaptureAnimators()
 	{
-		//IL_0232: Unknown result type (might be due to invalid IL or missing references)
 		Character val = FindNearestTracked();
 		if ((Object)(object)val == (Object)null)
 		{
@@ -152,8 +139,6 @@ public static class DogAiDiagnostics
 
 	private static Character FindNearestDog()
 	{
-		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
 		Player instance = Player.Instance;
 		if ((Object)(object)instance == (Object)null)
 		{
@@ -197,8 +182,6 @@ public static class DogAiDiagnostics
 		return best;
 		void Consider(Character c)
 		{
-			//IL_0018: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0028: Unknown result type (might be due to invalid IL or missing references)
 			if (!((Object)(object)c == (Object)null) && ((CharBase)c).alive)
 			{
 				float num = Vector3.Distance(((Component)c).transform.position, ((Component)p).transform.position);

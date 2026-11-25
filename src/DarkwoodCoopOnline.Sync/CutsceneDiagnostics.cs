@@ -27,28 +27,6 @@ public static class CutsceneDiagnostics
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Expected O, but got Unknown
-		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004a: Expected O, but got Unknown
-		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0080: Expected O, but got Unknown
-		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b6: Expected O, but got Unknown
-		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ec: Expected O, but got Unknown
-		//IL_014e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015b: Expected O, but got Unknown
-		//IL_0183: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0198: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a5: Expected O, but got Unknown
-		//IL_01a5: Expected O, but got Unknown
-		//IL_01ce: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01db: Expected O, but got Unknown
-		//IL_0204: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0211: Expected O, but got Unknown
-		//IL_0239: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0247: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -199,8 +177,6 @@ public static class CutsceneDiagnostics
 
 	private static void ForceExactTrapStartDialogue(NPC doctor)
 	{
-		//IL_00d6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e0: Invalid comparison between Unknown and I4
 		try
 		{
 			DialogueWindow val = (((Object)(object)Singleton<UI>.Instance != (Object)null) ? Singleton<UI>.Instance.dialogueWindow : null);
@@ -297,8 +273,6 @@ public static class CutsceneDiagnostics
 
 	private static void AfterCheckWelcome(DialogueWindow __instance)
 	{
-		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0094: Invalid comparison between Unknown and I4
 		if ((Object)(object)__instance == (Object)null || (Object)(object)__instance.npc == (Object)null || (Object)(object)__instance.npc.characterDialogue == (Object)null)
 		{
 			return;

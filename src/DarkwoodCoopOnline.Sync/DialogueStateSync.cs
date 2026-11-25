@@ -18,20 +18,13 @@ public static class DialogueStateSync
 
 	public static byte[] PollChanges(Vector3 p1, Vector3 p2)
 	{
-		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
-		//IL_021b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0222: Expected I4, but got Unknown
 		List<(string, string, bool, bool)> list = null;
 		List<(string, string, string)> list2 = null;
 		List<(string, int)> list3 = null;
 		NPC[] array = SceneCache.Npcs();
 		foreach (NPC val in array)
 		{
-			if ((Object)(object)val == (Object)null || (Object)(object)val.characterDialogue == (Object)null || Mathf.Min(Vector3.Distance(((Component)val).transform.position, p1), Vector3.Distance(((Component)val).transform.position, p2)) > 4000f)
+			if ((Object)(object)val == (Object)null || (Object)(object)val.characterDialogue == (Object)null || CoopPeers.MinDistance(((Component)val).transform.position, p1) > 4000f)
 			{
 				continue;
 			}
@@ -124,14 +117,6 @@ public static class DialogueStateSync
 
 	public static void ApplyChanges(PacketReader r)
 	{
-		//IL_0182: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018c: Expected O, but got Unknown
-		//IL_0241: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0245: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0247: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0253: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0255: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0266: Unknown result type (might be due to invalid IL or missing references)
 		int num = r.UShort();
 		for (int i = 0; i < num; i++)
 		{
@@ -186,7 +171,6 @@ public static class DialogueStateSync
 
 	private static NPC FindByKey(string key)
 	{
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
 		NPC[] array = SceneCache.Npcs();
 		foreach (NPC val in array)
 		{
@@ -200,8 +184,6 @@ public static class DialogueStateSync
 
 	private static string KeyOf(string name, Vector3 p)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0016: Unknown result type (might be due to invalid IL or missing references)
 		return $"{name}@{Mathf.RoundToInt(p.x)}_{Mathf.RoundToInt(p.z)}";
 	}
 

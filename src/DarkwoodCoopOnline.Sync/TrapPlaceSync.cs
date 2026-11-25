@@ -18,11 +18,6 @@ public static class TrapPlaceSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005e: Expected O, but got Unknown
-		//IL_005e: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -39,9 +34,6 @@ public static class TrapPlaceSync
 
 	private static void After(Player __instance)
 	{
-		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c1: Unknown result type (might be due to invalid IL or missing references)
 		string pendingType = _pendingType;
 		_pendingType = null;
 		if (string.IsNullOrEmpty(pendingType) || !CoopRuntime.SessionActive)
@@ -70,13 +62,6 @@ public static class TrapPlaceSync
 
 	public static void ApplyPlaced(PacketReader r)
 	{
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
 		string text = r.Str();
 		Vector3 val = r.Vec3();
 		Quaternion val2 = r.Quat();

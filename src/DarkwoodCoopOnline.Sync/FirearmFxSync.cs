@@ -17,12 +17,6 @@ public static class FirearmFxSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0049: Expected O, but got Unknown
-		//IL_0083: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0090: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -34,8 +28,6 @@ public static class FirearmFxSync
 
 	private static void After(Player __instance)
 	{
-		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
 		if (CoopRuntime.SessionActive && !InvItemClass.isNull(__instance.currentItem))
 		{
 			CoopRuntime.Session.SendReliable(PacketWriter.Begin(PacketType.FirearmFired).Str(__instance.currentItem.type).Vec3(((Component)__instance).transform.position)
@@ -46,22 +38,6 @@ public static class FirearmFxSync
 
 	public static void ApplyFired(PacketReader r)
 	{
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0074: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ed: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f7: Unknown result type (might be due to invalid IL or missing references)
 		string text = r.Str();
 		Vector3 val = r.Vec3();
 		float num = r.Float();
@@ -96,12 +72,6 @@ public static class FirearmFxSync
 
 	private static void AfterSpawnBullet(Player __instance)
 	{
-		//IL_0036: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0100: Unknown result type (might be due to invalid IL or missing references)
 		if (!CoopRuntime.SessionActive || InvItemClass.isNull(__instance.currentItem) || __instance.currentItem.baseClass.item != (Object)null)
 		{
 			return;
@@ -126,12 +96,6 @@ public static class FirearmFxSync
 
 	public static void ApplyImpact(PacketReader r)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
 		Vector3 val = r.Vec3();
 		float num = r.Float();
 		bool num2 = r.Bool();

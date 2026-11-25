@@ -32,7 +32,6 @@ public static class SharedVisionSync
 
 	public static void Tick()
 	{
-		//IL_0061: Unknown result type (might be due to invalid IL or missing references)
 		if (!_enabled)
 		{
 			return;
@@ -52,7 +51,6 @@ public static class SharedVisionSync
 
 	private static void EnsureCone(RemotePlayerPuppet puppet)
 	{
-		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)_clonedCone != (Object)null && (Object)(object)_attachedTo == (Object)(object)puppet)
 		{
 			return;

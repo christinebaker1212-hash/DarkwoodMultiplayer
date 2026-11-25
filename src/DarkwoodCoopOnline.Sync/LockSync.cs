@@ -14,13 +14,6 @@ public static class LockSync
 
 	public static byte[] PollChanges(Vector3 p1, Vector3 p2)
 	{
-		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d8: Unknown result type (might be due to invalid IL or missing references)
 		List<(string, Vector3, bool)> changes = null;
 		Locked[] array = SceneCache.Locks();
 		foreach (Locked val in array)
@@ -52,13 +45,7 @@ public static class LockSync
 
 	private static void CheckOne(string name, Vector3 pos, bool locked, bool isPadlock, Vector3 p1, Vector3 p2, ref List<(string, Vector3, bool)> changes)
 	{
-		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0009: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
-		if (Mathf.Min(Vector3.Distance(pos, p1), Vector3.Distance(pos, p2)) > 4000f)
+		if (CoopPeers.MinDistance(pos, p1) > 4000f)
 		{
 			return;
 		}
@@ -80,11 +67,6 @@ public static class LockSync
 
 	public static void ApplyChanges(PacketReader r)
 	{
-		//IL_0016: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
 		int num = r.UShort();
 		for (int i = 0; i < num; i++)
 		{
@@ -115,8 +97,6 @@ public static class LockSync
 
 	private static T FindNearest<T>(T[] items, string name, Vector3 pos) where T : Component
 	{
-		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
 		T result = default(T);
 		float num = 250f;
 		foreach (T val in items)
@@ -136,8 +116,6 @@ public static class LockSync
 
 	private static string KeyOf(string name, Vector3 p)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0016: Unknown result type (might be due to invalid IL or missing references)
 		return $"{name}@{Mathf.RoundToInt(p.x)}_{Mathf.RoundToInt(p.z)}";
 	}
 

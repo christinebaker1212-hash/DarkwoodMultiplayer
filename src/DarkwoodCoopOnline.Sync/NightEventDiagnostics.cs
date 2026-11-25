@@ -70,8 +70,6 @@ public static class NightEventDiagnostics
 
 	public static void Tick()
 	{
-		//IL_01c7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0217: Unknown result type (might be due to invalid IL or missing references)
 		if (!_streaming)
 		{
 			return;

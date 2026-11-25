@@ -10,11 +10,6 @@ public static class PeerTeleport
 
 	public static void TeleportToPeer()
 	{
-		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c5: Unknown result type (might be due to invalid IL or missing references)
 		if (!CoopRuntime.SessionActive)
 		{
 			Plugin.Log.LogInfo("[PeerTeleport] sem sessão de co-op ativa - ignorado.");

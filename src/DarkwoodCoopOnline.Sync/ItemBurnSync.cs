@@ -15,12 +15,6 @@ public static class ItemBurnSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Expected O, but got Unknown
-		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0076: Expected O, but got Unknown
-		//IL_00cb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d8: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -42,7 +36,6 @@ public static class ItemBurnSync
 
 	private static void IgnitePostfix(Collider _collider)
 	{
-		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
 		if (CoopRuntime.SessionActive && !((Object)(object)_collider == (Object)null))
 		{
 			Item component = ((Component)_collider).GetComponent<Item>();
@@ -56,9 +49,6 @@ public static class ItemBurnSync
 
 	public static void ApplyIgnited(PacketReader r)
 	{
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
 		string text = r.Str();
 		Vector3 pos = r.Vec3();
 		Item val = FindNearest(text, pos);
@@ -71,7 +61,6 @@ public static class ItemBurnSync
 
 	private static void DestroyPostfix(Item __instance)
 	{
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
 		if (CoopRuntime.SessionActive && !((Object)(object)__instance == (Object)null) && __instance.destroyed)
 		{
 			CoopRuntime.Session.SendReliable(PacketWriter.Begin(PacketType.ItemDestroyed).Str(((Object)((Component)__instance).gameObject).name).Vec3(((Component)__instance).transform.position)
@@ -81,9 +70,6 @@ public static class ItemBurnSync
 
 	public static void ApplyDestroyed(PacketReader r)
 	{
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
 		string text = r.Str();
 		Vector3 pos = r.Vec3();
 		Item val = FindNearest(text, pos);
@@ -96,8 +82,6 @@ public static class ItemBurnSync
 
 	private static Item FindNearest(string name, Vector3 pos)
 	{
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
 		Item result = null;
 		float num = 250f;
 		Item[] array = SceneCache.Items();

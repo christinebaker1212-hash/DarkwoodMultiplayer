@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Runs the mod's network layer (no Unity needed) against real sockets: dotnet run -->
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><RollForward>Major</RollForward><Nullable>disable</Nullable><NoWarn>CS8981</NoWarn></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../src/DarkwoodCoopOnline.Net/Proto.cs" />
+    <Compile Include="../../src/DarkwoodCoopOnline.Net/Links.cs" />
+    <Compile Include="../../src/DarkwoodCoopOnline.Net/RelayServer.cs" />
+    <Compile Include="../../src/DarkwoodCoopOnline.Net/RelayClient.cs" />
+    <Compile Include="../../src/DarkwoodCoopOnline.Net/InviteCode.cs" />
+    <Compile Include="../../src/DarkwoodCoopOnline.Net/LanSearch.cs" />
+  </ItemGroup>
+</Project>

@@ -24,12 +24,6 @@ public static class FlagSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Expected O, but got Unknown
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0069: Expected O, but got Unknown
-		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00be: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -111,16 +105,6 @@ public static class FlagSync
 
 	private static void DumpNearbyIfQuestCharacterFlag(string flagName)
 	{
-		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0107: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_019a: Unknown result type (might be due to invalid IL or missing references)
 		if (string.IsNullOrEmpty(flagName) || flagName.IndexOf("groom", StringComparison.OrdinalIgnoreCase) < 0)
 		{
 			return;

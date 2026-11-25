@@ -16,16 +16,6 @@ public static class InSightSync
 
 	public static void EnsurePatched(string modId)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005d: Expected O, but got Unknown
-		//IL_005d: Expected O, but got Unknown
-		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0099: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a6: Expected O, but got Unknown
-		//IL_00a6: Expected O, but got Unknown
 		if (!_patched)
 		{
 			_patched = true;
@@ -102,7 +92,6 @@ public static class InSightSync
 
 	private static void Replay(List<EventTriggers> triggers, EventTrigger.Type type, SightDelegate del)
 	{
-		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
 		if (del != null)
 		{
 			del.Invoke();
@@ -135,8 +124,6 @@ public static class InSightSync
 
 	private static string KeyOf(InSightOfPlayer i)
 	{
-		//IL_0011: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
 		return $"{((Object)i).name}@{Mathf.RoundToInt(((Component)i).transform.position.x)}_{Mathf.RoundToInt(((Component)i).transform.position.z)}";
 	}
 

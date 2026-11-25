@@ -21,10 +21,13 @@ public static class ReturnToMenuSync
 	private static void Before()
 	{
 		MainMenuNativeButtons.Reset();
-		if (CoopRuntime.SessionActive)
+		if (CoopRuntime.Session != null || CoopConnection.Current != null)
 		{
-			Plugin.Log.LogInfo("[ReturnToMenuSync] voltando pro menu principal - avisando o peer antes de encerrar a sessão.");
-			CoopRuntime.Session.SendReliable(PacketWriter.Begin(PacketType.PeerLeaving).Finish());
+			Plugin.Log.LogInfo("[Session] back to the main menu - leaving the co-op game.");
+			if (CoopRuntime.SessionActive)
+			{
+				CoopRuntime.Session.SendReliable(PacketWriter.Begin(PacketType.PeerLeaving).Finish());
+			}
 			Plugin.Instance?.StopSessionExternal();
 		}
 	}

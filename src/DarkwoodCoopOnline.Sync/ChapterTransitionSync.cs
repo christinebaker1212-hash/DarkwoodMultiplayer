@@ -220,6 +220,12 @@ public static class ChapterTransitionSync
 		int num = r.Int();
 		r.Bool();
 		r.Bool();
+		if (CoopRuntime.Session != null && CoopRuntime.Session.Role == NetRole.Host && _waitingForOwnSceneLoad)
+		{
+			// several players reached the trigger at once: the chapter is already being generated
+			Plugin.Log.LogInfo($"[ChapterTransitionSync] chapter {num} requested again by slot {CoopRuntime.Sender} - already switching, ignored.");
+			return;
+		}
 		if (CoopRuntime.Session != null && CoopRuntime.Session.Role == NetRole.Host)
 		{
 			Plugin.Log.LogInfo($"[ChapterTransitionSync] cliente pediu troca de capítulo (chapter={num}) — HOST executando agora.");

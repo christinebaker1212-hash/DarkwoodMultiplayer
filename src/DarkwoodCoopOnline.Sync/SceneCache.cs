@@ -155,6 +155,52 @@ public static class SceneCache
 		return c.items;
 	}
 
+	// Every Transform in the scene, active or not. Scanning them all is slow on Darkwood's maps, so the
+	// result is reused for up to 10 seconds; FindTransform rescans once if the cached list misses.
+	private static Transform[] _allTransforms;
+
+	private static float _allTransformsAt = float.MinValue;
+
+	public static Transform[] AllTransforms(bool fresh = false)
+	{
+		if (fresh || _allTransforms == null || Time.unscaledTime - _allTransformsAt > 10f)
+		{
+			_allTransforms = Object.FindObjectsOfType<Transform>(true);
+			_allTransformsAt = Time.unscaledTime;
+		}
+		return _allTransforms;
+	}
+
+	// The transform named `name` nearest to pos (within maxDist), or null
+	public static Transform FindTransform(System.Func<Transform, bool> match, Vector3 pos, float maxDist)
+	{
+		Transform transform = Nearest(AllTransforms(), match, pos, maxDist);
+		if ((Object)(object)transform == (Object)null && Time.unscaledTime - _allTransformsAt > 0.5f)
+		{
+			transform = Nearest(AllTransforms(fresh: true), match, pos, maxDist);
+		}
+		return transform;
+	}
+
+	private static Transform Nearest(Transform[] all, System.Func<Transform, bool> match, Vector3 pos, float maxDist)
+	{
+		Transform result = null;
+		float num = maxDist;
+		foreach (Transform transform in all)
+		{
+			if (!((Object)(object)transform == (Object)null) && match(transform))
+			{
+				float num2 = Vector3.Distance(transform.position, pos);
+				if (num2 < num)
+				{
+					num = num2;
+					result = transform;
+				}
+			}
+		}
+		return result;
+	}
+
 	public static void ForceRescanCharacters()
 	{
 		_characters.nextScanAt = float.MinValue;
@@ -188,5 +234,7 @@ public static class SceneCache
 		_npcs.nextScanAt = float.MinValue;
 		_inSights.items = null;
 		_inSights.nextScanAt = float.MinValue;
+		_allTransforms = null;
+		_allTransformsAt = float.MinValue;
 	}
 }

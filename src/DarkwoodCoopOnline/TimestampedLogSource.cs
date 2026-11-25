@@ -35,8 +35,35 @@ internal sealed class TimestampedLogSource
 		Enqueue((LogLevel)32, data);
 	}
 
+	// Off by default: the mod's detailed per-event diagnostics are dropped (they cost string building and
+	// disk writes every time something moves). Connection / session lines are always kept.
+	public static bool Verbose;
+
+	private static readonly string[] AlwaysKeep = new string[13] { "[Relay]", "[Net]", "[Join]", "[Host]", "[Session]", "[PortMap]", "[Steam]", "[Notice]", "[LanSaveTransfer]", "[World]", "[VersionCheck]", "[StableIdentity]", "===" };
+
 	public void LogInfo(object data)
 	{
+		if (!Verbose)
+		{
+			string text = data as string;
+			if (text == null)
+			{
+				return;
+			}
+			bool flag = false;
+			for (int i = 0; i < AlwaysKeep.Length; i++)
+			{
+				if (text.StartsWith(AlwaysKeep[i], StringComparison.Ordinal))
+				{
+					flag = true;
+					break;
+				}
+			}
+			if (!flag)
+			{
+				return;
+			}
+		}
 		Enqueue((LogLevel)16, data);
 	}
 

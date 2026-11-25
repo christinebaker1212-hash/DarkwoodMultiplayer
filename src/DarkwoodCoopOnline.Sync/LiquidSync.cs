@@ -72,7 +72,10 @@ public static class LiquidSync
 		}
 		else if (!((Object)(object)__instance == (Object)null))
 		{
-			Plugin.Log.LogInfo("[LiquidSync][diag] Liquid.startBurning() chamado: '" + CleanName(((Object)((Component)__instance).gameObject).name) + "' " + $"pos={((Component)__instance).transform.position:F0} jáEstavaQueimando={__state} sessionActive={CoopRuntime.SessionActive}");
+			if (TimestampedLogSource.Verbose)
+			{
+				Plugin.Log.LogInfo("[LiquidSync][diag] Liquid.startBurning() chamado: '" + CleanName(((Object)((Component)__instance).gameObject).name) + "' " + $"pos={((Component)__instance).transform.position:F0} jáEstavaQueimando={__state} sessionActive={CoopRuntime.SessionActive}");
+			}
 			if (CoopRuntime.SessionActive && !__state && __instance.burning)
 			{
 				Plugin.Log.LogInfo("[LiquidSync] '" + CleanName(((Object)((Component)__instance).gameObject).name) + "' pegou fogo de verdade agora - anunciando pro peer.");

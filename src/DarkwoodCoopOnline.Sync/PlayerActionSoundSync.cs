@@ -83,7 +83,7 @@ public static class PlayerActionSoundSync
 		string text = r.Str();
 		if (!string.IsNullOrEmpty(text))
 		{
-			RemotePlayerPuppet remotePlayerPuppet = ((CoopRuntime.Session != null) ? CoopRuntime.Session.Puppet : null);
+			RemotePlayerPuppet remotePlayerPuppet = CoopPeers.SenderPuppet;
 			_applyingRemote = true;
 			AudioObject val = (((Object)(object)remotePlayerPuppet != (Object)null) ? AudioController.Play(text, ((Component)remotePlayerPuppet).transform) : AudioController.Play(text));
 			if ((Object)(object)val != (Object)null && (Object)(object)remotePlayerPuppet != (Object)null && (Object)(object)val.primaryAudioSource != (Object)null)

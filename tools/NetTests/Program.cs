@@ -28,6 +28,55 @@ static class T
 	}
 	static void Wait(int ms = 150) => Thread.Sleep(ms);
 
+	static CoopConnection JoinConn(int port, string room, string pw, string name, string id)
+	{
+		var client = new RelayClient(); var done = new ManualResetEventSlim(); TcpLink link = null;
+		TcpLink.ConnectAsync("127.0.0.1", port, 3000, (l, f) => client.OnFrame(f), l => { }, (l, e) => { link = l; done.Set(); });
+		done.Wait(5000); client.Attach(link);
+		var c = CoopConnection.ForClient(client, "TCP");
+		for (int i = 0; i < 50 && !c.GotRoomInfo; i++) { c.Tick(0.01f); Thread.Sleep(10); }
+		c.Join(pw, name, id);
+		for (int i = 0; i < 50 && !c.Joined; i++) { c.Tick(0.01f); Thread.Sleep(10); }
+		return c;
+	}
+
+	static List<CoopConnection.Ev> Drain(CoopConnection c) { var l = new List<CoopConnection.Ev>(); Thread.Sleep(150); c.Tick(0.15f); while (c.Poll(out var ev)) l.Add(ev); return l; }
+
+	static void ConnectionTests()
+	{
+		var srv = new RelayServer();
+		srv.Start("Crew", "", "Hosty", "local:h", out _);
+		var host = CoopConnection.ForHost(srv, "Hosty", "local:h", "host");
+		var a = JoinConn(srv.Port, "Crew", "", "Ann", "local:a");
+		Check(a.Joined && a.MySlot == 1, "CoopConnection: client joins open room");
+		a.Hello();
+		var hev = Drain(host);
+		Check(hev.Count >= 2 && hev[0].Kind == CoopConnection.EvKind.PeerJoined && hev[1].Kind == CoopConnection.EvKind.PeerInGame && host.NameOf(1) == "Ann", "host: Joined then InGame, roster has the name");
+		var aev = Drain(a);
+		Check(aev.Exists(e => e.Kind == CoopConnection.EvKind.PeerInGame && e.Slot == 0) && a.NameOf(0) == "Hosty", "client: sees the host in game with its name");
+		var b = JoinConn(srv.Port, "Crew", "", "Bo", "local:b"); b.Hello();
+		var bev = Drain(b);
+		Check(b.NameOf(0) == "Hosty" && b.NameOf(1) == "Ann", "late joiner: roster has host and earlier player");
+		aev = Drain(a);
+		Check(aev.Exists(e => e.Kind == CoopConnection.EvKind.PeerInGame && e.Slot == 2) && a.NameOf(2) == "Bo", "earlier player hears about the new one");
+		b.SendGame(-1, new byte[] { 60, 1 }, true);
+		hev = Drain(host); aev = Drain(a);
+		Check(hev.Exists(e => e.Kind == CoopConnection.EvKind.Game && e.Slot == 2) && aev.Exists(e => e.Kind == CoopConnection.EvKind.Game && e.Slot == 2), "game packet from slot 2 reaches host and slot 1");
+		// a player sends something then drops: their packet is handled while their roster entry still exists
+		b.SendGame(0, new byte[] { 68, 9 }, true); b.Close();
+		Thread.Sleep(600);
+		host.Tick(0.1f);
+		bool order = false; string nameAtPacket = null;
+		while (host.Poll(out var ev)) { if (ev.Kind == CoopConnection.EvKind.Game && ev.Slot == 2) nameAtPacket = host.NameOf(2); if (ev.Kind == CoopConnection.EvKind.PeerLeft && ev.Slot == 2) { order = nameAtPacket == "Bo"; host.RemovePeer(2); } }
+		Check(order, "last packet of a leaving player is handled before they're removed (identity known)");
+		var b2 = JoinConn(srv.Port, "Crew", "", "Bo", "local:b"); b2.Hello();
+		hev = Drain(host);
+		Check(b2.MySlot == 2 && host.NameOf(2) == "Bo" && hev.Exists(e => e.Kind == CoopConnection.EvKind.PeerInGame && e.Slot == 2), "quick rejoin into the same slot keeps the roster right");
+		srv.Stop(); Thread.Sleep(800);
+		aev = Drain(a);
+		Check(aev.Exists(e => e.Kind == CoopConnection.EvKind.Disconnected) && a.DisconnectText != null, "host closing: client gets Disconnected (" + a.DisconnectText + ")");
+	}
+
 	static int Main()
 	{
 		// invite codes: round trip, typo tolerance, checksum
@@ -129,6 +178,7 @@ static class T
 		srv.Stop(); Wait(800);
 		var bye = a.Last(Proto.S_REJECT);
 		Check(bye != null && bye[1] == (byte)Proto.Reject.HostLeft, "host closing tells players");
+		ConnectionTests();
 		Console.WriteLine(fails == 0 ? "ALL PASSED" : $"{fails} FAILED");
 		return fails == 0 ? 0 : 1;
 	}

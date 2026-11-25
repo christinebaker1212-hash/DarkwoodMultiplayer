@@ -106,7 +106,7 @@ public static class TrapSpawnSync
 					switch (b)
 					{
 					case 1:
-						val3 = (((Object)(object)CoopRuntime.Session?.Puppet != (Object)null) ? ((Component)CoopRuntime.Session.Puppet).gameObject : null);
+						val3 = (((Object)(object)CoopPeers.SenderPuppet != (Object)null) ? ((Component)CoopPeers.SenderPuppet).gameObject : null);
 						break;
 					case 2:
 					{

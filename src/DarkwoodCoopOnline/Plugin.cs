@@ -11,10 +11,10 @@ using Object = UnityEngine.Object;
 
 namespace DarkwoodCoopOnline;
 
-[BepInPlugin("com.felipe.darkwoodcooponline", "Darkwood Co-op Online", "0.3.93")]
+[BepInPlugin("com.felipe.darkwoodcooponline", "Darkwood Co-op Online", "0.4.0")]
 public class Plugin : BaseUnityPlugin
 {
-	public const string Version = "0.3.93";
+	public const string Version = "0.4.0";
 
 	internal static TimestampedLogSource Log;
 
@@ -69,17 +69,18 @@ public class Plugin : BaseUnityPlugin
 		Log = new TimestampedLogSource(Logger);
 		Instance = this;
 		Version version = Assembly.GetExecutingAssembly().GetName().Version;
-		Version version2 = new Version("0.3.93.0");
+		Version version2 = new Version("0.4.0.0");
 		if (version != version2)
 		{
-			Log.LogError("[VersionCheck] DESSINCRONIA: Plugin.Version='0.3.93' mas AssemblyVersion " + $"compilada='{version}' - alguém bumpou só um dos dois (Properties/AssemblyInfo.cs " + "precisa acompanhar Plugin.Version SEMPRE). Corrija antes de publicar.");
+			Log.LogError("[VersionCheck] DESSINCRONIA: Plugin.Version='0.4.0' mas AssemblyVersion " + $"compilada='{version}' - alguém bumpou só um dos dois (Properties/AssemblyInfo.cs " + "precisa acompanhar Plugin.Version SEMPRE). Corrija antes de publicar.");
 		}
 		else
 		{
-			Log.LogInfo("[VersionCheck] OK - Plugin.Version e AssemblyVersion batem (0.3.93).");
+			Log.LogInfo("[VersionCheck] OK - Plugin.Version e AssemblyVersion batem (0.4.0).");
 		}
 		Application.runInBackground = true;
 		CoopConfig.Bind(((BaseUnityPlugin)this).Config);
+		TimestampedLogSource.Verbose = ((BaseUnityPlugin)this).Config.Bind<bool>("Debug", "VerboseLog", false, "Write the mod's detailed diagnostics to the log (big log files, a little slower). Turn on only to report a bug.").Value;
 		_debugKeys = ((BaseUnityPlugin)this).Config.Bind<bool>("Debug", "DiagnosticHotkeys", false, "Developer diagnostic keys (F11/F12/Insert/Home/End/Delete/PageUp/PageDown/Backspace/keypad). Several start per-frame logging that slows the game - leave off unless you are debugging.");
 		_voiceEnabled = ((BaseUnityPlugin)this).Config.Bind<bool>("Voice", "Enabled", false, "Voice chat por proximidade (grava do microfone só durante sessão pareada)");
 		_voiceDevice = ((BaseUnityPlugin)this).Config.Bind<string>("Voice", "Device", "", "Nome do dispositivo de microfone (Microphone.devices) — vazio usa o 1º disponível");
@@ -452,8 +453,8 @@ public class Plugin : BaseUnityPlugin
 			};
 			_creditLabel.normal.textColor = new Color(1f, 1f, 1f, 0.55f);
 		}
-		GUI.Label(new Rect(8f, (float)Screen.height - 24f, 400f, 20f), "Developed by Felipesfx with AI help", _creditLabel);
-		GUI.Label(new Rect(8f, (float)Screen.height - 40f, 400f, 20f), "Darkwood Co-op Online v0.3.93", _creditLabel);
+		GUI.Label(new Rect(8f, (float)Screen.height - 24f, 700f, 20f), "Developed by Felipesfx with AI help · 4-player networking modelled on Moemon Kai Co-op", _creditLabel);
+		GUI.Label(new Rect(8f, (float)Screen.height - 40f, 400f, 20f), "Darkwood Co-op Online v" + Version + " (4 players)", _creditLabel);
 	}
 
 	private void DrawConnectionPanel(int id)

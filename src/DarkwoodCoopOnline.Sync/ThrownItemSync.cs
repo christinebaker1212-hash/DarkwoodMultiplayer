@@ -144,7 +144,10 @@ public static class ThrownItemSync
 		Vector3 val2 = (((Object)(object)Player.Instance != (Object)null) ? ((Component)Player.Instance).transform.position : Vector3.zero);
 		foreach (var (val3, text2) in list)
 		{
-			Plugin.Log.LogInfo($"[ThrownItemSync][diag] MINHA pos jogador={val2:F0} vs pos anunciada do item={((Component)val3).transform.position:F0} (delta={Vector3.Distance(val2, ((Component)val3).transform.position):F0}) onGround={val3.onGround}");
+			if (TimestampedLogSource.Verbose)
+			{
+				Plugin.Log.LogInfo($"[ThrownItemSync][diag] MINHA pos jogador={val2:F0} vs pos anunciada do item={((Component)val3).transform.position:F0} (delta={Vector3.Distance(val2, ((Component)val3).transform.position):F0}) onGround={val3.onGround}");
+			}
 			Plugin.Log.LogInfo($"[ThrownItemSync] '{text2}' assentou - anunciando pos={((Component)val3).transform.position:F0}.");
 			packetWriter.Vec3(((Component)val3).transform.position).Quat(((Component)val3).transform.rotation).Str(text2);
 			Inventory component = ((Component)val3).GetComponent<Inventory>();
@@ -182,7 +185,10 @@ public static class ThrownItemSync
 				Plugin.Log.LogWarning("[ThrownItemSync] falhou ao resolver prefab '" + text + "' na ItemsDatabase.");
 				continue;
 			}
-			Plugin.Log.LogInfo($"[ThrownItemSync][diag] resolvido prefab '{val4}' pro tipo '{text}' (hasItem={flag} " + "itType='" + text2 + "').");
+			if (TimestampedLogSource.Verbose)
+			{
+				Plugin.Log.LogInfo($"[ThrownItemSync][diag] resolvido prefab '{val4}' pro tipo '{text}' (hasItem={flag} " + "itType='" + text2 + "').");
+			}
 			_suppressNextAwake = true;
 			GameObject val5 = Core.AddPrefab(val4, val, val2, (GameObject)null, true);
 			_suppressNextAwake = false;

@@ -27,6 +27,8 @@ public sealed class CoopConnection
 		public int Slot;
 
 		public byte[] Payload;
+
+		public Peer Peer;
 	}
 
 	public sealed class Peer
@@ -46,6 +48,11 @@ public sealed class CoopConnection
 	private readonly Queue<Ev> _events = new Queue<Ev>();
 
 	public readonly Peer[] Roster = new Peer[Proto.MaxPlayers];
+
+	// (client) which slots we've already announced as joined / in the world
+	private readonly bool[] _announced = new bool[Proto.MaxPlayers];
+
+	private readonly bool[] _announcedInGame = new bool[Proto.MaxPlayers];
 
 	public bool IsHost { get; private set; }
 
@@ -208,6 +215,14 @@ public sealed class CoopConnection
 		}
 	}
 
+	public void RemovePeer(int slot)
+	{
+		if (slot >= 0 && slot < Roster.Length && slot != MySlot)
+		{
+			Roster[slot] = null;
+		}
+	}
+
 	public string NameOf(int slot)
 	{
 		if (slot < 0 || slot >= Roster.Length)
@@ -243,24 +258,45 @@ public sealed class CoopConnection
 		}
 	}
 
+	// Roster changes are applied as events are consumed, so they happen in the same order as the
+	// session sees them (a player who drops and reconnects into the same slot stays consistent).
 	public bool Poll(out Ev ev)
 	{
 		if (_events.Count > 0)
 		{
 			ev = _events.Dequeue();
+			if (ev.Slot >= 0 && ev.Slot < Roster.Length && ev.Slot != MySlot)
+			{
+				if (ev.Kind == EvKind.PeerJoined && ev.Peer != null)
+				{
+					Roster[ev.Slot] = ev.Peer;
+				}
+				else if (ev.Kind == EvKind.PeerInGame)
+				{
+					if (Roster[ev.Slot] == null && ev.Peer != null)
+					{
+						Roster[ev.Slot] = ev.Peer;
+					}
+					if (Roster[ev.Slot] != null)
+					{
+						Roster[ev.Slot].InGame = true;
+					}
+				}
+			}
 			return true;
 		}
 		ev = default(Ev);
 		return false;
 	}
 
-	private void Push(EvKind kind, int slot, byte[] payload = null)
+	private void Push(EvKind kind, int slot, byte[] payload = null, Peer peer = null)
 	{
 		_events.Enqueue(new Ev
 		{
 			Kind = kind,
 			Slot = slot,
-			Payload = payload
+			Payload = payload,
+			Peer = peer
 		});
 	}
 
@@ -292,24 +328,19 @@ public sealed class CoopConnection
 			case RelayServer.EvKind.Joined:
 			{
 				string[] array = Encoding.UTF8.GetString(result.Payload).Split(new char[1] { '\n' }, 2);
-				Roster[result.Slot] = new Peer
+				Push(EvKind.PeerJoined, result.Slot, null, new Peer
 				{
 					Slot = result.Slot,
 					Name = array[0],
 					StableId = ((array.Length > 1) ? array[1] : "")
-				};
-				Push(EvKind.PeerJoined, result.Slot);
+				});
 				break;
 			}
 			case RelayServer.EvKind.InGame:
-				if (Roster[result.Slot] != null)
-				{
-					Roster[result.Slot].InGame = true;
-				}
 				Push(EvKind.PeerInGame, result.Slot);
 				break;
 			case RelayServer.EvKind.Left:
-				Roster[result.Slot] = null;
+				// the roster entry stays until the session has handled everything this player sent
 				Push(EvKind.PeerLeft, result.Slot);
 				break;
 			case RelayServer.EvKind.State:
@@ -402,24 +433,26 @@ public sealed class CoopConnection
 			{
 				break;
 			}
-			bool flag2 = Roster[num] == null;
-			bool flag3 = Roster[num] != null && Roster[num].InGame;
-			Roster[num] = new Peer
-			{
-				Slot = num,
-				Name = name,
-				StableId = stableId,
-				InGame = flag
-			};
 			if (num != MySlot)
 			{
+				// what the roster will look like once the events before this one are consumed
+				bool flag2 = !_announced[num];
+				_announced[num] = true;
+				Peer peer = new Peer
+				{
+					Slot = num,
+					Name = name,
+					StableId = stableId,
+					InGame = false
+				};
 				if (flag2)
 				{
-					Push(EvKind.PeerJoined, num);
+					Push(EvKind.PeerJoined, num, null, peer);
 				}
-				if (flag && !flag3)
+				if (flag && !_announcedInGame[num])
 				{
-					Push(EvKind.PeerInGame, num);
+					_announcedInGame[num] = true;
+					Push(EvKind.PeerInGame, num, null, peer);
 				}
 			}
 			break;
@@ -427,9 +460,10 @@ public sealed class CoopConnection
 		case Proto.S_LEAVE:
 		{
 			int num2 = msgReader.U8();
-			if (num2 >= 0 && num2 < Roster.Length && Roster[num2] != null)
+			if (num2 >= 0 && num2 < Roster.Length && _announced[num2])
 			{
-				Roster[num2] = null;
+				_announced[num2] = false;
+				_announcedInGame[num2] = false;
 				Push(EvKind.PeerLeft, num2);
 			}
 			break;

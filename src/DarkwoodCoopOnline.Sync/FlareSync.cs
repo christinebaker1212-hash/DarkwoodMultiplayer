@@ -87,7 +87,10 @@ public static class FlareSync
 		Vector3 val2 = (((Object)(object)Player.Instance != (Object)null) ? ((Component)Player.Instance).transform.position : Vector3.zero);
 		foreach (var (val3, text) in list)
 		{
-			Plugin.Log.LogInfo($"[FlareSync][diag] MINHA pos jogador={val2:F0} vs pos anunciada do flare={val3:F0} (delta={Vector3.Distance(val2, val3):F0})");
+			if (TimestampedLogSource.Verbose)
+			{
+				Plugin.Log.LogInfo($"[FlareSync][diag] MINHA pos jogador={val2:F0} vs pos anunciada do flare={val3:F0} (delta={Vector3.Distance(val2, val3):F0})");
+			}
 			Plugin.Log.LogInfo($"[FlareSync] flare assentado - anunciando: type='{text}' pos={val3:F0}");
 			packetWriter.Vec2XZ(val3).Str(text);
 		}

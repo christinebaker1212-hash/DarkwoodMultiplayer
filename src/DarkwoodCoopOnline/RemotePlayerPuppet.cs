@@ -66,6 +66,16 @@ public sealed class RemotePlayerPuppet : CharBase
 			_sampleCount = 0;
 			((Component)this).transform.position = pos;
 		}
+		else if (_sampleCount > 0 && unscaledTime - _samples[_sampleCount - 1].T > 0.3f)
+		{
+			PosSample posSample = _samples[_sampleCount - 1];
+			_samples[0] = new PosSample
+			{
+				T = unscaledTime - 0.05f,
+				P = posSample.P
+			};
+			_sampleCount = 1;
+		}
 		if (_sampleCount == _samples.Length)
 		{
 			Array.Copy(_samples, 1, _samples, 0, _samples.Length - 1);

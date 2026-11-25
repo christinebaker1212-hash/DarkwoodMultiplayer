@@ -46,6 +46,19 @@ public static class PauseSync
 
 	public static bool PeerWantsPause => _peerIntent;
 
+	public static string PausedByNames
+	{
+		get
+		{
+			System.Collections.Generic.List<string> list = new System.Collections.Generic.List<string>();
+			foreach (int peerIntent in _peerIntents)
+			{
+				list.Add(CoopPeers.NameOf(peerIntent));
+			}
+			return string.Join(", ", list.ToArray());
+		}
+	}
+
 	public static void EnterDreamSuppression()
 	{
 		_suppressForDoctorDream = true;

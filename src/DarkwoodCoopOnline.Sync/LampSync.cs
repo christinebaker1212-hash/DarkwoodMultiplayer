@@ -43,7 +43,10 @@ public static class LampSync
 			{
 				_byKey[value.key] = it;
 			}
-			Plugin.Log.LogInfo("[LampSync][diag] lâmpada vista: '" + it.name + "' key='" + value.key + "' " + $"draggable={it.draggable} switchable={it.switchable} pos={((Component)it).transform.position:F0}");
+			if (TimestampedLogSource.Verbose)
+			{
+				Plugin.Log.LogInfo("[LampSync][diag] lâmpada vista: '" + it.name + "' key='" + value.key + "' " + $"draggable={it.draggable} switchable={it.switchable} pos={((Component)it).transform.position:F0}");
+			}
 		}
 		return value;
 	}
@@ -77,7 +80,10 @@ public static class LampSync
 			bool isOn = val.isOn;
 			if (!info.known || info.lastOn != isOn)
 			{
-				Plugin.Log.LogInfo("[LampSync][diag] mudança local detectada: '" + val.name + "' key='" + info.key + "' " + $"isOn {info.lastOn}->{isOn} (known={info.known}) - anunciando pro peer.");
+				if (TimestampedLogSource.Verbose)
+				{
+					Plugin.Log.LogInfo("[LampSync][diag] mudança local detectada: '" + val.name + "' key='" + info.key + "' " + $"isOn {info.lastOn}->{isOn} (known={info.known}) - anunciando pro peer.");
+				}
 				info.known = true;
 				info.lastOn = isOn;
 				if (list == null)
@@ -117,7 +123,10 @@ public static class LampSync
 				continue;
 			}
 			Info info = GetInfo(val);
-			Plugin.Log.LogInfo($"[LampSync][diag] '{val.name}' recebido do peer: isOn={flag} (era {val.isOn}) - aplicando aqui.");
+			if (TimestampedLogSource.Verbose)
+			{
+				Plugin.Log.LogInfo($"[LampSync][diag] '{val.name}' recebido do peer: isOn={flag} (era {val.isOn}) - aplicando aqui.");
+			}
 			info.known = true;
 			info.lastOn = flag;
 			if (val.isOn != flag)

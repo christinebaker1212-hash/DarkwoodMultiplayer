@@ -36,6 +36,71 @@ public sealed class EnemyPuppet : MonoBehaviour
 
 	public Vector3 DebugTargetPos => _targetPos;
 
+	// Snapshot interpolation (see RemotePlayerPuppet): show the enemy where its owner saw it ~100 ms ago,
+	// between two real updates, instead of chasing the newest one (which stutters with uneven arrivals).
+	private readonly float[] _sampleT = new float[12];
+
+	private readonly Vector3[] _sampleP = new Vector3[12];
+
+	private int _samples;
+
+	private void PushSample(Vector3 pos)
+	{
+		if (_samples > 0 && Vector3.Distance(_sampleP[_samples - 1], pos) > 400f)
+		{
+			_samples = 0;
+		}
+		else if (_samples > 0 && Time.unscaledTime - _sampleT[_samples - 1] > 0.3f)
+		{
+			// it stood still (no updates): restart motion from where it stood, not from long ago
+			Vector3 vector = _sampleP[_samples - 1];
+			_samples = 0;
+			_sampleT[0] = Time.unscaledTime - 0.05f;
+			_sampleP[0] = vector;
+			_samples = 1;
+		}
+		if (_samples == _sampleT.Length)
+		{
+			System.Array.Copy(_sampleT, 1, _sampleT, 0, _samples - 1);
+			System.Array.Copy(_sampleP, 1, _sampleP, 0, _samples - 1);
+			_samples--;
+		}
+		_sampleT[_samples] = Time.unscaledTime;
+		_sampleP[_samples] = pos;
+		_samples++;
+	}
+
+	private Vector3 Sampled()
+	{
+		if (_samples == 0)
+		{
+			return _targetPos;
+		}
+		float num = Time.unscaledTime - 0.1f;
+		if (num <= _sampleT[0])
+		{
+			return _sampleP[0];
+		}
+		for (int i = 0; i < _samples - 1; i++)
+		{
+			if (num >= _sampleT[i] && num <= _sampleT[i + 1])
+			{
+				float num2 = _sampleT[i + 1] - _sampleT[i];
+				return Vector3.Lerp(_sampleP[i], _sampleP[i + 1], (num2 > 0.0001f) ? ((num - _sampleT[i]) / num2) : 1f);
+			}
+		}
+		if (_samples >= 2)
+		{
+			float num3 = _sampleT[_samples - 1] - _sampleT[_samples - 2];
+			if (num3 > 0.0001f && num3 < 0.5f)
+			{
+				float num4 = Mathf.Min(num - _sampleT[_samples - 1], 0.15f);
+				return _sampleP[_samples - 1] + (_sampleP[_samples - 1] - _sampleP[_samples - 2]) * (num4 / num3);
+			}
+		}
+		return _sampleP[_samples - 1];
+	}
+
 	public void Bind(Character c, tk2dSpriteAnimator body)
 	{
 		c.init();
@@ -54,6 +119,7 @@ public sealed class EnemyPuppet : MonoBehaviour
 	public void SetTarget(Vector3 pos, Quaternion rot, string bodyClip, string legsClip)
 	{
 		_targetPos = pos;
+		PushSample(pos);
 		_targetRot = rot;
 		_bodyClip = bodyClip;
 		_legsClip = legsClip;
@@ -62,6 +128,8 @@ public sealed class EnemyPuppet : MonoBehaviour
 	public void SnapToTarget()
 	{
 		((Component)this).transform.position = _targetPos;
+		_samples = 0;
+		PushSample(_targetPos);
 		if ((Object)(object)_body != (Object)null)
 		{
 			((Component)_body).transform.rotation = _targetRot;
@@ -88,9 +156,8 @@ public sealed class EnemyPuppet : MonoBehaviour
 			return;
 		}
 		Vector3 position = ((Component)this).transform.position;
-		Vector3 val = default(Vector3);
-		val = new Vector3(_targetPos.x, position.y, _targetPos.z);
-		((Component)this).transform.position = Vector3.Lerp(position, val, 18f * Time.deltaTime);
+		Vector3 vector = Sampled();
+		((Component)this).transform.position = new Vector3(vector.x, position.y, vector.z);
 		if ((Object)(object)_body != (Object)null)
 		{
 			((Component)_body).transform.rotation = Quaternion.Slerp(((Component)_body).transform.rotation, _targetRot, 18f * Time.deltaTime);
@@ -117,13 +184,19 @@ public sealed class EnemyPuppet : MonoBehaviour
 		{
 			lastDiagnosedClip = clip;
 			string text = ((a.CurrentClip != null) ? a.CurrentClip.name : "(nenhum)");
-			Plugin.Log.LogInfo($"[EnemyPuppet][{tag}][diag] '{ownerName}' pos=({pos.x:F0},{pos.z:F0}) - pedido NOVO clipe='{clip}' " + $"| ANTES: Playing={a.Playing} CurrentClip='{text}' IsPlaying('{clip}')={a.IsPlaying(clip)}");
+			if (TimestampedLogSource.Verbose)
+			{
+				Plugin.Log.LogInfo($"[EnemyPuppet][{tag}][diag] '{ownerName}' pos=({pos.x:F0},{pos.z:F0}) - pedido NOVO clipe='{clip}' " + $"| ANTES: Playing={a.Playing} CurrentClip='{text}' IsPlaying('{clip}')={a.IsPlaying(clip)}");
+			}
 		}
 		if (a.IsPlaying(clip))
 		{
 			if (flag)
 			{
-				Plugin.Log.LogInfo("[EnemyPuppet][" + tag + "][diag] '" + ownerName + "' - IGNOROU Play('" + clip + "') pq IsPlaying já é True.");
+				if (TimestampedLogSource.Verbose)
+				{
+					Plugin.Log.LogInfo("[EnemyPuppet][" + tag + "][diag] '" + ownerName + "' - IGNOROU Play('" + clip + "') pq IsPlaying já é True.");
+				}
 			}
 		}
 		else if (a.GetClipByName(clip) != null)
@@ -133,7 +206,10 @@ public sealed class EnemyPuppet : MonoBehaviour
 			PuppetAnimSuppress.WeAreCalling = false;
 			if (flag)
 			{
-				Plugin.Log.LogInfo("[EnemyPuppet][" + tag + "][diag] '" + ownerName + "' - Play('" + clip + "') chamado. DEPOIS: " + string.Format("Playing={0} CurrentClip='{1}'", a.Playing, (a.CurrentClip != null) ? a.CurrentClip.name : "(nenhum)"));
+				if (TimestampedLogSource.Verbose)
+				{
+					Plugin.Log.LogInfo("[EnemyPuppet][" + tag + "][diag] '" + ownerName + "' - Play('" + clip + "') chamado. DEPOIS: " + string.Format("Playing={0} CurrentClip='{1}'", a.Playing, (a.CurrentClip != null) ? a.CurrentClip.name : "(nenhum)"));
+				}
 			}
 		}
 		else if (clip != lastMissingWarned)

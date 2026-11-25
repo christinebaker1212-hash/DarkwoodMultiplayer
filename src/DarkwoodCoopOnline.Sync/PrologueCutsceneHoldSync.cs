@@ -70,7 +70,10 @@ public static class PrologueCutsceneHoldSync
 
 	private static bool BeforeDisplayIntroVideo(WorldGenerator __instance, VideoPlayer player)
 	{
-		Plugin.Log.LogInfo($"[PrologueCutsceneHoldSync][diag] DisplayIntroVideo chamado - SessionActive={CoopRuntime.SessionActive} LobbySync.IsActive={LobbySync.IsActive} ShouldHold={ShouldHold()}");
+		if (TimestampedLogSource.Verbose)
+		{
+			Plugin.Log.LogInfo($"[PrologueCutsceneHoldSync][diag] DisplayIntroVideo chamado - SessionActive={CoopRuntime.SessionActive} LobbySync.IsActive={LobbySync.IsActive} ShouldHold={ShouldHold()}");
+		}
 		if (!ShouldHold())
 		{
 			return true;

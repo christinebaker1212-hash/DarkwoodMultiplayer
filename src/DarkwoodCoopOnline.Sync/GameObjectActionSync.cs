@@ -88,21 +88,8 @@ public static class GameObjectActionSync
 		bool flag = r.Bool();
 		bool flag2 = r.Bool();
 		_announced.Add(KeyOf(text, val, flag));
-		GameObject val2 = null;
-		float num = 400f;
-		Transform[] array = Object.FindObjectsOfType<Transform>(true);
-		foreach (Transform val3 in array)
-		{
-			if (!((Object)(object)val3 == (Object)null) && !(((Object)((Component)val3).gameObject).name != text))
-			{
-				float num2 = Vector3.Distance(val3.position, val);
-				if (num2 < num)
-				{
-					num = num2;
-					val2 = ((Component)val3).gameObject;
-				}
-			}
-		}
+		Transform transform = SceneCache.FindTransform((Transform t) => ((Object)((Component)t).gameObject).name == text, val, 400f);
+		GameObject val2 = (((Object)(object)transform != (Object)null) ? ((Component)transform).gameObject : null);
 		if ((Object)(object)val2 == (Object)null)
 		{
 			Plugin.Log.LogWarning("[GameObjectActionSync] peer aplicou ação em '" + text + "' mas não achei esse GameObject na minha cena.");

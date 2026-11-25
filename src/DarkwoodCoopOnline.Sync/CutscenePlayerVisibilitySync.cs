@@ -17,8 +17,7 @@ public static class CutscenePlayerVisibilitySync
 			EnsureVisible();
 			return;
 		}
-		RemotePlayerPuppet remotePlayerPuppet = CoopRuntime.Session?.Puppet;
-		if (!((Object)(object)remotePlayerPuppet == (Object)null))
+		if (CoopPeers.Count > 0)
 		{
 			Controller instance = Singleton<Controller>.Instance;
 			bool flag = (Object)(object)instance != (Object)null && instance.playingCutscene && instance.currentCutscene != null && !instance.currentCutscene.playerIsVisible;
@@ -31,7 +30,10 @@ public static class CutscenePlayerVisibilitySync
 			{
 				_lastHidden = flag;
 				_hiddenSince = (flag ? Time.unscaledTime : (-1f));
-				remotePlayerPuppet.SetCutsceneHidden(flag);
+				foreach (RemotePlayerPuppet puppet in CoopPeers.Puppets)
+				{
+					puppet?.SetCutsceneHidden(flag);
+				}
 				Plugin.Log.LogInfo("[CutscenePlayerVisibilitySync] puppet do peer " + (flag ? "escondido" : "visível de novo") + " (cutscene playerIsVisible=false).");
 			}
 		}
@@ -43,7 +45,10 @@ public static class CutscenePlayerVisibilitySync
 		{
 			_lastHidden = false;
 			_hiddenSince = -1f;
-			CoopRuntime.Session?.Puppet?.SetCutsceneHidden(hidden: false);
+			foreach (RemotePlayerPuppet puppet in CoopPeers.Puppets)
+			{
+				puppet?.SetCutsceneHidden(hidden: false);
+			}
 		}
 	}
 

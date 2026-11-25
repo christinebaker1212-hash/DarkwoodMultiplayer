@@ -228,11 +228,13 @@ public static class CharacterMessageSync
 		switch (targetKind)
 		{
 		case 1:
-			if (!((Object)(object)CoopRuntime.Session?.Puppet != (Object)null))
+			// the player who sent the message (the nearest one if it's resolved later)
+			RemotePlayerPuppet remotePlayerPuppet = CoopPeers.SenderPuppet ?? CoopRuntime.Session?.Puppet;
+			if (!((Object)(object)remotePlayerPuppet != (Object)null))
 			{
 				return null;
 			}
-			return ((Component)CoopRuntime.Session.Puppet).transform;
+			return ((Component)remotePlayerPuppet).transform;
 		case 2:
 		{
 			Character val2 = EnemySync.ResolvePuppetById(targetId);
@@ -258,13 +260,20 @@ public static class CharacterMessageSync
 		{
 			Transform result = null;
 			float num = 400f;
-			Transform[] array = Object.FindObjectsOfType<Transform>(true);
-			foreach (Transform val in array)
+			Transform[] array = SceneCache.AllTransforms();
+			for (int pass = 0; pass < 2 && (Object)(object)result == (Object)null; pass++)
 			{
-				if (!((Object)(object)val == (Object)null) && TransformKeyMatches(val, targetId, out var dist) && dist < num)
+				foreach (Transform val in array)
 				{
-					num = dist;
-					result = val;
+					if (!((Object)(object)val == (Object)null) && TransformKeyMatches(val, targetId, out var dist) && dist < num)
+					{
+						num = dist;
+						result = val;
+					}
+				}
+				if ((Object)(object)result == (Object)null)
+				{
+					array = SceneCache.AllTransforms(fresh: true);
 				}
 			}
 			return result;

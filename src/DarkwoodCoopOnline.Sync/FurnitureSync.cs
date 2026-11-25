@@ -147,7 +147,10 @@ public static class FurnitureSync
 				}
 				if (val.switchable)
 				{
-					Plugin.Log.LogInfo("[FurnitureSync][diag] lâmpada '" + val.name + "' RASTREADA e sendo mandada " + $"pro peer agora (drag={val.beingDragged} push={flag4} pos={position:F0}).");
+					if (TimestampedLogSource.Verbose)
+					{
+						Plugin.Log.LogInfo("[FurnitureSync][diag] lâmpada '" + val.name + "' RASTREADA e sendo mandada " + $"pro peer agora (drag={val.beingDragged} push={flag4} pos={position:F0}).");
+					}
 				}
 				info.claimedByMe = true;
 				info.settleResendsLeft = 0;
@@ -238,7 +241,10 @@ public static class FurnitureSync
 			Info info = GetInfo(val2);
 			if (val2.switchable)
 			{
-				Plugin.Log.LogInfo($"[FurnitureSync][diag] lâmpada '{val2.name}' recebida do peer, pos={val:F0} " + $"claimedByMe={info.claimedByMe} isHost={isHost}.");
+				if (TimestampedLogSource.Verbose)
+				{
+					Plugin.Log.LogInfo($"[FurnitureSync][diag] lâmpada '{val2.name}' recebida do peer, pos={val:F0} " + $"claimedByMe={info.claimedByMe} isHost={isHost}.");
+				}
 			}
 			if (!isHost || !info.claimedByMe)
 			{

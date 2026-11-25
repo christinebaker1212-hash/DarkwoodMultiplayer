@@ -8,5 +8,6 @@
     <Compile Include="../../src/DarkwoodCoopOnline.Net/RelayClient.cs" />
     <Compile Include="../../src/DarkwoodCoopOnline.Net/InviteCode.cs" />
     <Compile Include="../../src/DarkwoodCoopOnline.Net/LanSearch.cs" />
+    <Compile Include="../../src/DarkwoodCoopOnline.Net/CoopConnection.cs" />
   </ItemGroup>
 </Project>

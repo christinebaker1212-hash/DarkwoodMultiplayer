@@ -47,6 +47,11 @@ public sealed class CoopSession
 
 	private float _shadowTimer;
 
+	// enemy target checks need line-of-sight raycasts per enemy and player: 5 times a second is plenty
+	private float _aggroTimer;
+
+	private const float AggroInterval = 0.2f;
+
 	private const float ShadowInterval = 0.1f;
 
 	// snapshot chunks paced per receiving slot (-1 = everyone)
@@ -269,6 +274,12 @@ public sealed class CoopSession
 				EnemySync.WakePuppetsNearPeers(list);
 				NightEventSync.SetPeerPosition(Puppet?.transform.position ?? local);
 				Transform transform = ((Component)Player.Instance).transform;
+				_aggroTimer += EnemyInterval;
+				bool flag = _aggroTimer >= AggroInterval;
+				if (flag)
+				{
+					_aggroTimer = 0f;
+				}
 				foreach (RemotePlayerPuppet puppet in _puppetList)
 				{
 					if ((Object)(object)puppet == (Object)null || !puppet.HasState)
@@ -279,7 +290,7 @@ public sealed class CoopSession
 					{
 						EnemySync.ReleaseAggroFromPuppet(((Component)puppet).transform);
 					}
-					else
+					else if (flag)
 					{
 						EnemySync.CheckAggroRedirect(transform, ((Component)puppet).transform);
 					}
@@ -621,7 +632,12 @@ public sealed class CoopSession
 
 	private void OnPeerLeft(int slot, string name)
 	{
+		if (_net.Roster[slot] == null && !_puppets.ContainsKey(slot))
+		{
+			return;
+		}
 		name = name ?? ("Player " + (slot + 1));
+		_net.RemovePeer(slot);
 		if (_puppets.TryGetValue(slot, out var value))
 		{
 			if ((Object)(object)value != (Object)null)

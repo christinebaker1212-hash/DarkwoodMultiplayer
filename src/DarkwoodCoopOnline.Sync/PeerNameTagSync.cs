@@ -7,7 +7,7 @@ namespace DarkwoodCoopOnline.Sync;
 
 public static class PeerNameTagSync
 {
-	private static bool _enabled;
+	private static bool _enabled = true;
 
 	private static string _cachedName;
 
@@ -52,7 +52,11 @@ public static class PeerNameTagSync
 			if (!(val2.z <= 0f))
 			{
 				EnsureStyle();
-				string text = ResolveName(session.PeerIdentity);
+				string text = (string.IsNullOrEmpty(peerPuppet.PeerName) ? ResolveName(session.PeerIdentity) : peerPuppet.PeerName);
+				if (DownedSync.IsPeerDowned(peerPuppet.Slot))
+				{
+					text += "  (DOWN)";
+				}
 				float num = 220f;
 				float num2 = 24f;
 				GUI.Label(new Rect(val2.x - num * 0.5f, (float)Screen.height - val2.y - num2, num, num2), text, _style);

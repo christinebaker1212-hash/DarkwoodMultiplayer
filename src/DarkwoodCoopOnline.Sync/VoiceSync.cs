@@ -229,7 +229,10 @@ public static class VoiceSync
 		if (Time.time >= _diagNextLogAt)
 		{
 			_diagNextLogAt = Time.time + 2f;
-			Plugin.Log.LogInfo($"[VoiceSync][diag] mic='{Device}' avancando={flag} picoRMS={_diagPeakRms:F4} " + $"limiar={0.004f:F4} falando={IsSpeaking} pacotesEnviados={_diagPacketsSent} bytesEnviados={_diagBytesSent}");
+			if (TimestampedLogSource.Verbose)
+			{
+				Plugin.Log.LogInfo($"[VoiceSync][diag] mic='{Device}' avancando={flag} picoRMS={_diagPeakRms:F4} " + $"limiar={0.004f:F4} falando={IsSpeaking} pacotesEnviados={_diagPacketsSent} bytesEnviados={_diagBytesSent}");
+			}
 			_diagPeakRms = 0f;
 		}
 	}

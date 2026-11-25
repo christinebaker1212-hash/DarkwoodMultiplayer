@@ -14,8 +14,7 @@ public static class PauseUI
 		if (PauseSync.PeerWantsPause)
 		{
 			EnsureStyles();
-			string text = ((myRole == NetRole.Host) ? "CLIENT" : "HOST");
-			string text2 = "PAUSED BY " + text;
+			string text2 = "PAUSED BY " + PauseSync.PausedByNames.ToUpperInvariant();
 			float num = 420f;
 			float num2 = 50f;
 			Rect val = new Rect(((float)Screen.width - num) * 0.5f, 90f, num, num2);

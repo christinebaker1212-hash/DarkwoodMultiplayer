@@ -11,6 +11,11 @@ public static class WindowSync
 		public string key;
 
 		public string lastSig = "";
+
+		// Right after we apply another player's state, the game may still adjust the door/window for a
+		// moment (finishing the planks, normalizing health). Those adjustments are ours, not news:
+		// sending them back made the other PCs undo the barricade ("boards break as soon as they're up").
+		public float settleUntil;
 	}
 
 	private const float Range = 4000f;
@@ -58,6 +63,11 @@ public static class WindowSync
 			}
 			Info info = GetInfo(val);
 			string text = Sig(val);
+			if (Time.unscaledTime < info.settleUntil)
+			{
+				info.lastSig = text;
+				continue;
+			}
 			if (!(text == info.lastSig))
 			{
 				info.lastSig = text;
@@ -94,7 +104,7 @@ public static class WindowSync
 			{
 				continue;
 			}
-			GetInfo(value).lastSig = $"{flag}|{num2}|{flag2}";
+			Info info = GetInfo(value);
 			if (flag)
 			{
 				if (!value.barricaded)
@@ -103,15 +113,16 @@ public static class WindowSync
 					value.setBarricadeState(num2, flag2);
 					AudioController.Play("hammer_barricade", ((Component)value).transform);
 				}
-				else if (value.barricadeHealth != num2)
-				{
-					value.barricadeHealth = num2;
-				}
+				value.barricaded = true;
+				value.barricadeHealth = num2;
+				value.playerBarricade = flag2;
 			}
 			else if (value.barricaded)
 			{
 				value.destroyBarricade(false);
 			}
+			info.lastSig = Sig(value);
+			info.settleUntil = Time.unscaledTime + 1f;
 		}
 	}
 

@@ -98,6 +98,16 @@ public static class DoorSwingSync
 				continue;
 			}
 			Info info = GetInfo(val2);
+			if (val2.barricaded)
+			{
+				// boarded up: it doesn't swing, and nobody else's swing applies to it
+				if (info.frozen)
+				{
+					Freeze(val2, freeze: false, info);
+				}
+				info.lastRot = val2.body.rotation;
+				continue;
+			}
 			Quaternion rotation = val2.body.rotation;
 			float num = Quaternion.Angle(rotation, info.lastRot);
 			info.lastRot = rotation;
@@ -161,7 +171,7 @@ public static class DoorSwingSync
 			Vector3 pos = r.Vec2XZ(0f);
 			Quaternion rot = r.Quat();
 			Door val = FindByPivot(pivot);
-			if (!((Object)(object)val == (Object)null) && !((Object)(object)val.body == (Object)null))
+			if (!((Object)(object)val == (Object)null) && !((Object)(object)val.body == (Object)null) && !val.barricaded)
 			{
 				Info info = GetInfo(val);
 				info.remoteUntil = Time.time + 0.4f;

@@ -66,7 +66,8 @@ public static class PropSync
 			bool flag = r.Bool();
 			_known[Key(val)] = flag;
 			Door val2 = FindNearest(val);
-			if (!((Object)(object)val2 == (Object)null) && val2.opened != flag)
+			// a stale "open" must never force a barricaded door (opening it broke the planks)
+			if (!((Object)(object)val2 == (Object)null) && val2.opened != flag && !(flag && val2.barricaded))
 			{
 				Transform val3 = (((Object)(object)Player.Instance != (Object)null) ? ((Component)Player.Instance).transform : ((Component)val2).transform);
 				if (flag)

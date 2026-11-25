@@ -44,16 +44,37 @@ public static class HostFlow
 			{
 				return "Opening your router for an invite code...";
 			}
-			if (PortMapper.FindVpnAddress(out var address, out var name))
+			RefreshAddresses();
+			if (_vpnAddress != null)
 			{
-				return name + " address: " + address + PortSuffix();
+				return _vpnName + " address: " + _vpnAddress + PortSuffix();
 			}
-			string text = PortMapper.LanAddress();
+			string text = _lanAddress;
 			if (text != null)
 			{
 				return "Same network: " + text + PortSuffix() + (SteamAvailability.Available ? "  ·  Steam friends: JOIN > your name" : "");
 			}
 			return SteamAvailability.Available ? "Steam friends: JOIN > your name" : "";
+		}
+	}
+
+	// network adapters are slow to list: look them up every few seconds, not every frame
+	private static float _addressesAt = float.MinValue;
+
+	private static string _vpnAddress;
+
+	private static string _vpnName;
+
+	private static string _lanAddress;
+
+	private static void RefreshAddresses()
+	{
+		if (!(Time.unscaledTime - _addressesAt < 5f))
+		{
+			_addressesAt = Time.unscaledTime;
+			_vpnAddress = (PortMapper.FindVpnAddress(out var address, out var name) ? address : null);
+			_vpnName = name;
+			_lanAddress = PortMapper.LanAddress();
 		}
 	}
 
@@ -150,6 +171,16 @@ public static class HostFlow
 		if (!Hosting)
 		{
 			return;
+		}
+		// what a joiner gets: the prologue (start alongside), the world (download it), or "wait" mid-load
+		RelayServer server = CoopConnection.Current.Server;
+		if ((Object)(object)Player.Instance == (Object)null || !Core.worldGenFinished())
+		{
+			server.HostStatus = Proto.HostStatus.Loading;
+		}
+		else
+		{
+			server.HostStatus = (Player.Instance.firstPlay ? Proto.HostStatus.Prologue : Proto.HostStatus.Chapter);
 		}
 		PortMapper.State status = PortMapper.Status;
 		if (status == _lastPortState)

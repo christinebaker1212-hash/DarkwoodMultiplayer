@@ -339,7 +339,7 @@ public sealed class RelayServer
 			break;
 		case Proto.C_STATE:
 		{
-			if (!m.InGame)
+			if (!m.InGame || !IsCurrent(m))
 			{
 				break;
 			}
@@ -368,7 +368,7 @@ public sealed class RelayServer
 		}
 		case Proto.C_RELAY:
 		{
-			if (!m.InGame || f.Length < 4)
+			if (!m.InGame || f.Length < 4 || !IsCurrent(m))
 			{
 				break;
 			}
@@ -420,6 +420,15 @@ public sealed class RelayServer
 		case Proto.C_LEAVE:
 			m.Link.Close();
 			break;
+		}
+	}
+
+	// still the member in its slot (not replaced by a reconnect, not dropped)
+	private bool IsCurrent(Member m)
+	{
+		lock (_gate)
+		{
+			return m.Slot > 0 && m.Slot < _slots.Length && _slots[m.Slot] == m;
 		}
 	}
 
@@ -522,6 +531,12 @@ public sealed class RelayServer
 		}
 		if (member != null)
 		{
+			// the old connection of a player who reconnected: the host forgets that slot first
+			Events.Enqueue(new Ev
+			{
+				Kind = EvKind.Left,
+				Slot = member.Slot
+			});
 			try
 			{
 				member.Link.Close();
@@ -747,7 +762,7 @@ public sealed class RelayServer
 		{
 			foreach (Member item in _all)
 			{
-				DateTime dateTime = ((item.Link is TcpLink tcpLink) ? tcpLink.LastReceived : item.LastHeard);
+				DateTime dateTime = item.Link.LastReceived;
 				if ((utcNow - dateTime).TotalSeconds > DeadAfterSeconds)
 				{
 					(list ?? (list = new List<Member>())).Add(item);

@@ -79,6 +79,9 @@ public static class EnemySync
 
 	private static readonly Dictionary<string, float> _puppetSince = new Dictionary<string, float>();
 
+	// which player's game runs each enemy we show as a puppet (slot), from who sent its spawn / movement
+	private static readonly Dictionary<string, int> _puppetOwner = new Dictionary<string, int>();
+
 	private static readonly Dictionary<string, float> _puppetLastHp = new Dictionary<string, float>();
 
 	private static int _lastMatched = -1;
@@ -832,6 +835,10 @@ public static class EnemySync
 				}
 				continue;
 			}
+			if (CoopRuntime.Sender >= 0)
+			{
+				_puppetOwner[text] = CoopRuntime.Sender;
+			}
 			DetectLocalDamage(text, value);
 			DetectLocalBehaviorChange(text, value);
 			Drive(text, value, pos, num3, rot, bodyClip, legsClip);
@@ -1024,6 +1031,7 @@ public static class EnemySync
 			{
 				_puppetById[text] = val2;
 				_puppetSince[text] = Time.time;
+				_puppetOwner[text] = CoopRuntime.Sender;
 				hashSet.Add(val2);
 				((Behaviour)val2).enabled = false;
 				_puppetLastHp[text] = ((CharBase)val2).health;
@@ -1339,8 +1347,40 @@ public static class EnemySync
 		return packetWriter.Finish();
 	}
 
+	// The player running these enemies left: nobody can move them or take hits for them any more, so they
+	// go (on every PC alike). They come back when the area is set up again.
+	public static void OnPeerLeft(int slot)
+	{
+		List<string> list = new List<string>();
+		foreach (KeyValuePair<string, int> item in _puppetOwner)
+		{
+			if (item.Value == slot)
+			{
+				list.Add(item.Key);
+			}
+		}
+		foreach (string item2 in list)
+		{
+			_puppetOwner.Remove(item2);
+			if (_puppetById.TryGetValue(item2, out var value))
+			{
+				_puppetById.Remove(item2);
+				RemovePuppetTracking(item2);
+				if ((Object)(object)value != (Object)null)
+				{
+					Object.Destroy((Object)(object)((Component)value).gameObject);
+				}
+			}
+		}
+		if (list.Count > 0)
+		{
+			Plugin.Log.LogInfo($"[EnemySync] slot {slot} left - removed {list.Count} enemy puppet(s) they were running.");
+		}
+	}
+
 	public static void Reset()
 	{
+		_puppetOwner.Clear();
 		foreach (KeyValuePair<string, Character> item in _puppetById)
 		{
 			Character value = item.Value;

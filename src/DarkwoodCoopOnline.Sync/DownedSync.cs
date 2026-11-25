@@ -124,6 +124,8 @@ public static class DownedSync
 
 	private static bool _peerReallyDead;
 
+	private static float _wipeAt = float.MinValue;
+
 	private static float _diagTimer;
 
 	private const float DiagInterval = 1f;
@@ -373,6 +375,7 @@ public static class DownedSync
 		{
 			Plugin.Log.LogInfo("[Downed] everyone else is down too - nobody left to revive: party wipe.");
 			_peerReallyDead = true;
+		_wipeAt = Time.unscaledTime;
 			foreach (RemotePlayerPuppet puppet in CoopPeers.Puppets)
 			{
 				puppet?.SetReallyDead();
@@ -447,6 +450,12 @@ public static class DownedSync
 		if ((Object)(object)instance == (Object)null)
 		{
 			return;
+		}
+		// after a party wipe everyone respawns: stop treating the others as dead once that's over
+		if (_peerReallyDead && !_watchingRealDeath && Time.unscaledTime - _wipeAt > 30f && ((CharBase)instance).alive)
+		{
+			_peerReallyDead = false;
+			_peerDowned.Clear();
 		}
 		if (_watchingRealDeath)
 		{
@@ -625,6 +634,7 @@ public static class DownedSync
 			puppet?.SetReallyDead();
 		}
 		_peerReallyDead = true;
+		_wipeAt = Time.unscaledTime;
 		CoopRuntime.Session?.SendReliable(PacketWriter.Begin(PacketType.ForceDeath).Finish());
 	}
 
@@ -660,6 +670,7 @@ public static class DownedSync
 			puppet?.SetReallyDead();
 		}
 		_peerReallyDead = true;
+		_wipeAt = Time.unscaledTime;
 		_peerDowned.Clear();
 		Plugin.Log.LogInfo("[Downed] party wipe - dying with everyone.");
 	}

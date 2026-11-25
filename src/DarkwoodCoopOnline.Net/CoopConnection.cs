@@ -161,9 +161,14 @@ public sealed class CoopConnection
 
 	public void Join(string password, string myName, string myStableId)
 	{
+		JoinWithKey(Proto.RoomKey(RoomName, password), myName, myStableId);
+	}
+
+	public void JoinWithKey(byte[] key, string myName, string myStableId)
+	{
 		Rejected = null;
 		RejectText = null;
-		Client?.Join(Proto.RoomKey(RoomName, password), myName, myStableId);
+		Client?.Join(key, myName, myStableId);
 	}
 
 	public void RequestSave()
@@ -371,7 +376,15 @@ public sealed class CoopConnection
 				Plugin.Log.LogWarning($"[Net] bad frame 0x{result[0]:X2}: {ex.Message}");
 			}
 		}
-		if (!Client.Connected && !Closed)
+		// nothing at all (keep-alives arrive every 2 s) for a minute: the host is gone (Steam has no "closed")
+		ILink link = Client.Link;
+		bool flag = link != null && !link.Closed && (DateTime.UtcNow - link.LastReceived).TotalSeconds > 60.0;
+		if (flag)
+		{
+			Client.CloseReason = "The host stopped answering.";
+			link.Close();
+		}
+		if ((!Client.Connected || flag) && !Closed)
 		{
 			Closed = true;
 			if (DisconnectText == null)

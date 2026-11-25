@@ -144,7 +144,7 @@ public static class LanSearch
 		UdpClient udp = _udp;
 		DateTime dateTime = DateTime.MinValue;
 		udp.Client.ReceiveTimeout = 250;
-		while (_running)
+		while (_running && udp == _udp)
 		{
 			if ((DateTime.UtcNow - dateTime).TotalSeconds > 2.0)
 			{

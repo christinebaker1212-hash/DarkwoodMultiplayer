@@ -43,6 +43,14 @@ public static class SteamCarrier
 
 		public DateTime LastHeard = DateTime.UtcNow;
 
+		public DateTime LastReceived => LastHeard;
+
+		// Close() asked for: send what's queued first, then close (on the next Pump)
+		private volatile bool _closeAfterFlush;
+
+		// a frame Steam refused because its send buffer was full: sent first next time
+		private Out? _retry;
+
 		public DateTime LastKeepAlive;
 
 		public object Tag;
@@ -85,18 +93,58 @@ public static class SteamCarrier
 		// main thread
 		internal void Flush()
 		{
-			Out result;
-			while (_out.TryDequeue(out result))
+			if (_closed)
 			{
-				System.Threading.Interlocked.Add(ref _queued, -result.Data.Length);
-				if (!_closed && (result.Key == 0 || !_latest.TryGetValue(result.Key, out var value) || value == result.Seq))
+				return;
+			}
+			while (true)
+			{
+				Out result;
+				if (_retry.HasValue)
 				{
-					SendNow(Peer, result.Data, !result.Droppable);
+					result = _retry.Value;
+					_retry = null;
+				}
+				else
+				{
+					if (!_out.TryDequeue(out result))
+					{
+						break;
+					}
+					System.Threading.Interlocked.Add(ref _queued, -result.Data.Length);
+					if (result.Key != 0 && _latest.TryGetValue(result.Key, out var value) && value != result.Seq)
+					{
+						continue;
+					}
+				}
+				int num = SendNow(Peer, result.Data, !result.Droppable);
+				if (num == 25 && !result.Droppable)
+				{
+					// LimitExceeded: Steam's send buffer is full (a big save / snapshot). Try again next frame.
+					_retry = result;
+					return;
+				}
+			}
+			if (_closeAfterFlush)
+			{
+				CloseNow();
+			}
+		}
+
+		// Polite close: what's already queued still goes out (the goodbye, a last save upload...)
+		public void Close()
+		{
+			if (!_closed)
+			{
+				_closeAfterFlush = true;
+				if (!Started)
+				{
+					CloseNow();
 				}
 			}
 		}
 
-		public void Close()
+		public void CloseNow()
 		{
 			if (!_closed)
 			{
@@ -108,13 +156,8 @@ public static class SteamCarrier
 						Links.Remove(Peer);
 					}
 				}
-				try
-				{
-					CloseSession(Peer);
-				}
-				catch
-				{
-				}
+				// (the Steam session itself is left to expire: closing it now could drop what's still in
+				// Steam's send buffer, like the goodbye or a last character-save upload)
 				OnClosed?.Invoke(this);
 			}
 		}
@@ -178,7 +221,7 @@ public static class SteamCarrier
 		{
 			if (Links.TryGetValue(peer, out var value))
 			{
-				value.Close();
+				value.CloseNow();
 			}
 			SteamLink steamLink = new SteamLink(peer);
 			Links[peer] = steamLink;
@@ -293,6 +336,10 @@ public static class SteamCarrier
 		foreach (SteamLink item in list)
 		{
 			item.Flush();
+			if (item.Closed)
+			{
+				continue;
+			}
 			// keep-alive so the other side (and its 45 s timeout) knows we're here while a world loads
 			if (!item.Closed && (utcNow - item.LastKeepAlive).TotalSeconds >= 2.0)
 			{
@@ -302,8 +349,9 @@ public static class SteamCarrier
 		}
 	}
 
+	// returns the EResult (1 = OK, 25 = LimitExceeded)
 	[MethodImpl(MethodImplOptions.NoInlining)]
-	private static void SendNow(ulong peer, byte[] data, bool reliable)
+	private static int SendNow(ulong peer, byte[] data, bool reliable)
 	{
 		SteamNetworkingIdentity steamNetworkingIdentity = default(SteamNetworkingIdentity);
 		steamNetworkingIdentity.SetSteamID(new CSteamID(peer));
@@ -312,7 +360,7 @@ public static class SteamCarrier
 		GCHandle gCHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
 		try
 		{
-			SteamNetworkingMessages.SendMessageToUser(ref steamNetworkingIdentity, gCHandle.AddrOfPinnedObject(), (uint)data.Length, num, Channel);
+			return (int)SteamNetworkingMessages.SendMessageToUser(ref steamNetworkingIdentity, gCHandle.AddrOfPinnedObject(), (uint)data.Length, num, Channel);
 		}
 		finally
 		{
@@ -405,7 +453,8 @@ public static class SteamCarrier
 		}
 		foreach (SteamLink item in list)
 		{
-			item.Close();
+			item.Flush();
+			item.CloseNow();
 		}
 		AcceptIncoming = null;
 	}

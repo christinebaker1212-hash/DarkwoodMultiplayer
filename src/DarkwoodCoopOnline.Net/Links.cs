@@ -24,6 +24,9 @@ public interface ILink
 
 	// Bytes waiting to go out (to show a "slow connection" warning)
 	int QueuedBytes { get; }
+
+	// When anything (keep-alives included) last arrived: a silent link is a dead one
+	DateTime LastReceived { get; }
 }
 
 public sealed class TcpLink : ILink

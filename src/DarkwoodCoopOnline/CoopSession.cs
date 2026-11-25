@@ -580,7 +580,8 @@ public sealed class CoopSession
 		{
 			return value;
 		}
-		if ((Object)(object)Player.Instance == (Object)null)
+		// only players who are actually here (no ghost from a packet that arrived with their leave)
+		if ((Object)(object)Player.Instance == (Object)null || _net.Roster[slot] == null)
 		{
 			return null;
 		}
@@ -638,6 +639,21 @@ public sealed class CoopSession
 		}
 		name = name ?? ("Player " + (slot + 1));
 		_net.RemovePeer(slot);
+		_latestState.Remove(slot);
+		_scratchKeys.Clear();
+		foreach (int key in _latestBySenderType.Keys)
+		{
+			if (key >> 8 == slot)
+			{
+				_scratchKeys.Add(key);
+			}
+		}
+		foreach (int scratchKey in _scratchKeys)
+		{
+			_latestBySenderType.Remove(scratchKey);
+		}
+		_paced.Remove(slot);
+		EnemySync.OnPeerLeft(slot);
 		if (_puppets.TryGetValue(slot, out var value))
 		{
 			if ((Object)(object)value != (Object)null)

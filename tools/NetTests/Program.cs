@@ -72,9 +72,18 @@ static class T
 		var b2 = JoinConn(srv.Port, "Crew", "", "Bo", "local:b"); b2.Hello();
 		hev = Drain(host);
 		Check(b2.MySlot == 2 && host.NameOf(2) == "Bo" && hev.Exists(e => e.Kind == CoopConnection.EvKind.PeerInGame && e.Slot == 2), "quick rejoin into the same slot keeps the roster right");
+		// same player reconnects while the old connection is still open, into a lower free slot
+		var c3 = JoinConn(srv.Port, "Crew", "", "Cy", "local:c"); c3.Hello(); Drain(host);
+		a.Close(); Thread.Sleep(400); host.Tick(0.1f); while (host.Poll(out var e1)) if (e1.Kind == CoopConnection.EvKind.PeerLeft) host.RemovePeer(e1.Slot);
+		int oldSlot = c3.MySlot;
+		var c3b = JoinConn(srv.Port, "Crew", "", "Cy", "local:c"); c3b.Hello();
+		Thread.Sleep(300); host.Tick(0.1f);
+		var seq = new List<string>();
+		while (host.Poll(out var e2)) { seq.Add(e2.Kind + ":" + e2.Slot); if (e2.Kind == CoopConnection.EvKind.PeerLeft) host.RemovePeer(e2.Slot); }
+		Check(seq.Contains("PeerLeft:" + oldSlot) && host.NameOf(oldSlot) == (c3b.MySlot == oldSlot ? "Cy" : null) && host.NameOf(c3b.MySlot) == "Cy", $"reconnect with the same identity: host drops the old slot {oldSlot}, new slot {c3b.MySlot} ({string.Join(",", seq)})");
 		srv.Stop(); Thread.Sleep(800);
-		aev = Drain(a);
-		Check(aev.Exists(e => e.Kind == CoopConnection.EvKind.Disconnected) && a.DisconnectText != null, "host closing: client gets Disconnected (" + a.DisconnectText + ")");
+		aev = Drain(b2);
+		Check(aev.Exists(e => e.Kind == CoopConnection.EvKind.Disconnected) && b2.DisconnectText != null, "host closing: client gets Disconnected (" + b2.DisconnectText + ")");
 	}
 
 	static int Main()

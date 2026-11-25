@@ -46,6 +46,9 @@ public static class JoinFlow
 
 	private static RelayClient _pendingClient;
 
+	// which connection attempt is current (a cancelled attempt's late result is closed and ignored)
+	private static int _attempt;
+
 	public static Step Current { get; private set; }
 
 	public static string Error { get; private set; } = "";
@@ -165,6 +168,7 @@ public static class JoinFlow
 		_timer = 0f;
 		_pendingClient = new RelayClient();
 		RelayClient client = _pendingClient;
+		int attempt = ++_attempt;
 		Plugin.Log.LogInfo($"[Join] connecting to {host}:{port}...");
 		TcpLink.ConnectAsync(host, port, 8000, delegate(TcpLink l, byte[] f)
 		{
@@ -177,6 +181,11 @@ public static class JoinFlow
 			}
 		}, delegate(TcpLink link, string err)
 		{
+			if (attempt != _attempt)
+			{
+				link?.Close();
+				return;
+			}
 			_connectError = err;
 			_connectedLink = link;
 			_connectDone = true;
@@ -252,7 +261,7 @@ public static class JoinFlow
 		if (Current == Step.NeedPassword && _conn != null)
 		{
 			_key = Proto.RoomKey(_conn.RoomName, password ?? "");
-			_conn.Client.Join(_key, CoopConfig.MyName(), StableIdentity.Resolve());
+			_conn.JoinWithKey(_key, CoopConfig.MyName(), StableIdentity.Resolve());
 			Current = Step.Joining;
 			_timer = 0f;
 		}
@@ -274,6 +283,7 @@ public static class JoinFlow
 
 	private static void Reset()
 	{
+		_attempt++;
 		_conn = null;
 		_address = "";
 		_steamHost = 0uL;
@@ -356,7 +366,7 @@ public static class JoinFlow
 					Current = Step.NeedPassword;
 					break;
 				}
-				_conn.Client.Join(_key, CoopConfig.MyName(), StableIdentity.Resolve());
+				_conn.JoinWithKey(_key, CoopConfig.MyName(), StableIdentity.Resolve());
 				Current = Step.Joining;
 				_timer = 0f;
 			}
@@ -409,9 +419,9 @@ public static class JoinFlow
 			{
 				ApplySave(_conn.SaveBlob);
 			}
-			else if (_timer > 120f && _conn.SaveHave == 0)
+			else if ((_timer > 120f && _conn.SaveHave == 0) || _timer > 600f)
 			{
-				Fail("The host never sent their world.");
+				Fail("The host's world didn't arrive (" + _conn.SaveHave / 1024 + " of " + _conn.SaveTotal / 1024 + " KB).");
 			}
 			break;
 		case Step.Loading:

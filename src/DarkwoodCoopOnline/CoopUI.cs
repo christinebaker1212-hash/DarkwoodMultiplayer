@@ -404,6 +404,57 @@ public static class CoopUI
 		GUI.DragWindow();
 	}
 
+	// The in-game pause (ESC) menu is the game's MainMenu object switched on while in a world
+	private static bool _lastPauseOpen;
+
+	public static bool PauseMenuOpen
+	{
+		get
+		{
+			bool flag = false;
+			try
+			{
+				MainMenu instance = Singleton<MainMenu>.Instance;
+				flag = !Core.mainMenu && (Object)(object)Player.Instance != (Object)null && (Object)(object)instance != (Object)null && ((Behaviour)instance).isActiveAndEnabled;
+			}
+			catch
+			{
+			}
+			if (flag != _lastPauseOpen)
+			{
+				_lastPauseOpen = flag;
+				Plugin.Log.LogInfo("[Session] pause menu " + (flag ? "opened" : "closed"));
+			}
+			return flag;
+		}
+	}
+
+	private static Rect _pauseRect = new Rect(16f, 60f, 300f, 10f);
+
+	// Co-op options in the pause menu (left side): names, invite code, leave
+	public static void DrawPauseBox(CoopSession session)
+	{
+		EnsureStyles();
+		_pauseRect = GUILayout.Window(918283, _pauseRect, delegate
+		{
+			GUILayout.Label($"{session.PlayersInGame}/{Proto.MaxPlayers} players" + ((session.Role == NetRole.Client && session.Net.RttMs >= 0) ? $"  ·  ping {session.Net.RttMs} ms" : ""), _small, Array.Empty<GUILayoutOption>());
+			if (GUILayout.Button(PeerNameTagSync.Enabled ? "Player names: ON" : "Player names: OFF", Array.Empty<GUILayoutOption>()))
+			{
+				PeerNameTagSync.Enabled = !PeerNameTagSync.Enabled;
+			}
+			if (session.Role == NetRole.Host && !string.IsNullOrEmpty(HostFlow.Code) && GUILayout.Button("Copy invite code " + HostFlow.Code, Array.Empty<GUILayoutOption>()))
+			{
+				GUIUtility.systemCopyBuffer = HostFlow.Code;
+				CoopNotice.Show("Invite code copied");
+			}
+			if (GUILayout.Button((session.Role == NetRole.Host) ? "Stop hosting" : "Leave the co-op game", Array.Empty<GUILayoutOption>()))
+			{
+				Plugin.Instance?.StopSessionExternal();
+			}
+			GUILayout.Label("Tab: co-op info any time  ·  N: names  ·  hold F next to a downed friend to revive", _small, Array.Empty<GUILayoutOption>());
+		}, "CO-OP", _window, (GUILayoutOption[])(object)new GUILayoutOption[1] { GUILayout.Width(300f) });
+	}
+
 	// In game: who's here and how to invite more (top of the screen)
 	public static void DrawHud(CoopSession session)
 	{

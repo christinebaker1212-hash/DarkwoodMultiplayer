@@ -28,6 +28,8 @@ public static class CoopConfig
 
 	public static ConfigEntry<bool> ShowPing;
 
+	public static ConfigEntry<bool> ShowNames;
+
 	public static void Bind(ConfigFile cfg)
 	{
 		PlayerName = cfg.Bind("Co-op", "PlayerName", "", "Your name above your character (empty: your Steam name, or 'Player')");
@@ -39,7 +41,8 @@ public static class CoopConfig
 		LastRoomName = cfg.Bind("Co-op", "LastServerName", "", "Remembered: the name of the last game you joined");
 		LastRoomKey = cfg.Bind("Co-op", "LastServerKey", "", "Remembered: the last game's key (a hash of its name and password - the password itself isn't stored)");
 		LastSteamHost = cfg.Bind("Co-op", "LastSteamHost", "", "Remembered: the Steam host of the last game you joined over Steam");
-		ShowPing = cfg.Bind("Co-op", "ShowPing", true, "Show players and ping at the top of the screen");
+		ShowPing = cfg.Bind("Co-op", "ShowPing", true, "Show the co-op info (players, ping, invite code) at the top of the screen while the pause menu is open (or while holding Tab)");
+		ShowNames = cfg.Bind("Co-op", "ShowNames", true, "Show other players' names above them (also: N in game, or the co-op box in the pause menu)");
 	}
 
 	public static string MyName()

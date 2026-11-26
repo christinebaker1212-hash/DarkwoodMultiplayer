@@ -133,6 +133,8 @@ public static class LocationOwnership
 				{
 					if ((Object)(object)characters != (Object)null)
 					{
+						// tell everyone to drop their copies too (they'd stay frozen otherwise)
+						EnemySync.RegisterForcedRemoval(characters);
 						Object.Destroy((Object)(object)((Component)characters).gameObject);
 					}
 				}

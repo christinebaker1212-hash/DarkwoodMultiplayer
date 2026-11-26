@@ -12,7 +12,7 @@ public static class DownedSync
 {
 	public const float BleedOutSeconds = 75f;
 
-	private const float ReviveRange = 220f;
+	public const float ReviveRange = 220f;
 
 	public const float ReviveHoldSeconds = 3.5f;
 
@@ -186,6 +186,18 @@ public static class DownedSync
 		}
 	}
 
+	private static readonly Dictionary<int, float> _peerDownedAt = new Dictionary<int, float>();
+
+	// seconds a downed player has left before they bleed out (as seen from here)
+	public static float PeerTimeLeft(int slot)
+	{
+		if (!_peerDownedAt.TryGetValue(slot, out var value))
+		{
+			return BleedOutSeconds;
+		}
+		return Mathf.Max(0f, BleedOutSeconds - (Time.unscaledTime - value));
+	}
+
 	public static bool IsPeerDowned(int slot)
 	{
 		if (_peerDowned.TryGetValue(slot, out var value))
@@ -216,6 +228,7 @@ public static class DownedSync
 	public static void OnPeerLeft(int slot)
 	{
 		_peerDowned.Remove(slot);
+		_peerDownedAt.Remove(slot);
 		if ((Object)(object)_promptPuppet != (Object)null && _promptPuppet.Slot == slot)
 		{
 			_promptPuppet = null;
@@ -685,6 +698,10 @@ public static class DownedSync
 			{
 				CoopNotice.Show(CoopPeers.NameOf(from) + " is down! Hold F next to them to revive");
 			}
+		}
+		if (flag && !IsPeerDowned(from))
+		{
+			_peerDownedAt[from] = Time.unscaledTime;
 		}
 		_peerDowned[from] = flag;
 	}

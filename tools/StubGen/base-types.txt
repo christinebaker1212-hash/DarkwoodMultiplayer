@@ -48,3 +48,4 @@ CharacterSounds = UnityEngine.MonoBehaviour
 CustomCursorAction = UnityEngine.MonoBehaviour
 DreamTransition = UnityEngine.MonoBehaviour
 Selectable = UnityEngine.MonoBehaviour
+MainMenu = UnityEngine.MonoBehaviour

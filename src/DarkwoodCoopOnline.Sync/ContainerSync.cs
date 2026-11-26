@@ -45,10 +45,6 @@ public static class ContainerSync
 
 	private const string CorpseKeyPrefix = "corpse:";
 
-	private const float PeriodicReconcileInterval = 5f;
-
-	private static float _nextReconcileAt;
-
 	private const float CorpseFallbackRadius = 20f;
 
 	private static bool IsContainerType(Inventory.InvType t)
@@ -65,7 +61,8 @@ public static class ContainerSync
 		if ((int)inv.invType == 60)
 		{
 			Character component = ((Component)item).GetComponent<Character>();
-			string text = (((Object)(object)component != (Object)null) ? EnemySync.ResolveOwnedId(component) : null);
+			// the enemy's network id is the same on every PC (owned here, or a puppet of someone else's)
+			string text = (((Object)(object)component != (Object)null) ? (EnemySync.ResolveOwnedId(component) ?? EnemySync.FindPuppetId(component)) : null);
 			if (!string.IsNullOrEmpty(text))
 			{
 				return "corpse:" + text;
@@ -173,6 +170,13 @@ public static class ContainerSync
 					}
 					list.Add(Build(info.key, list2, info.version));
 				}
+				else if ((Object)(object)component2 != (Object)null && EnemySync.FindPuppetId(component2) != null)
+				{
+					// a body of an enemy someone else ran: its owner sends the real contents; until then this
+					// is the starting point, so looting it here is still reported
+					info.everSynced = true;
+					info.lastSyncedSig = text;
+				}
 			}
 			else
 			{
@@ -207,25 +211,8 @@ public static class ContainerSync
 				list.Add(Build(info.key, list2, info.version));
 			}
 		}
-		if (Time.time >= _nextReconcileAt)
-		{
-			_nextReconcileAt = Time.time + 5f;
-			int num2 = 0;
-			foreach (KeyValuePair<Inventory, Info> container in _containers)
-			{
-				Inventory key = container.Key;
-				Info value = container.Value;
-				if (!((Object)(object)key == (Object)null) && value.networkTouched)
-				{
-					CoopRuntime.Session?.SendReliable(Build(value.key, Snapshot(key), value.version));
-					num2++;
-				}
-			}
-			if (num2 > 0)
-			{
-				Plugin.Log.LogInfo($"[ContainerSync] reconciliação periódica: reenviando {num2} container(es) já tocados pela rede (rede de segurança contra pacote perdido).");
-			}
-		}
+		// (the periodic resend of every touched container is gone: delivery is reliable now, and a stale
+		// resend could make the host roll back a move someone had just made)
 		return list;
 	}
 
@@ -258,6 +245,15 @@ public static class ContainerSync
 		_containers[val] = info;
 		if (!isHost)
 		{
+			if (CoopRuntime.Sender != 0)
+			{
+				// another player's proposal: only the host decides (its answer comes to everyone)
+				return null;
+			}
+			if (info.key != text && text.StartsWith("corpse:"))
+			{
+				info.key = text;
+			}
 			if (info.everSynced && num < info.version)
 			{
 				Plugin.Log.LogWarning("[ContainerSync] IGNORANDO pacote atrasado/fora de ordem pra key='" + text + "' " + $"(versão recebida={num} < versão que já tenho={info.version}) - não aplicado.");
@@ -276,7 +272,12 @@ public static class ContainerSync
 		List<SlotState> list2 = Snapshot(val);
 		string text2 = Sig(list2);
 		List<SlotState> list3;
-		if (!info.everSynced || text2 == info.lastSyncedSig)
+		if (info.key != text && text.StartsWith("corpse:"))
+		{
+			info.key = text;
+		}
+		// accepted only if nothing changed here since we last agreed, and the asker had seen our latest
+		if (!info.everSynced || (text2 == info.lastSyncedSig && num >= info.version))
 		{
 			Plugin.Log.LogInfo("[ContainerSync] HOST aceita pedido do cliente: key='" + text + "'");
 			ApplyState(val, list);

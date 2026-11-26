@@ -416,7 +416,15 @@ public sealed class CoopSession
 		{
 			foreach (byte[] item in list)
 			{
-				SendReliable(item);
+				// the host's containers are the truth: players ask the host, the host tells everyone
+				if (_role == NetRole.Host)
+				{
+					SendReliable(item);
+				}
+				else
+				{
+					SendToHost(item);
+				}
 			}
 		}
 		PerfDiagnostics.End();

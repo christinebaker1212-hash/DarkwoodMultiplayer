@@ -7,7 +7,6 @@ namespace DarkwoodCoopOnline.Sync;
 
 public static class PeerNameTagSync
 {
-	private static bool _enabled = true;
 
 	private static string _cachedName;
 
@@ -19,14 +18,14 @@ public static class PeerNameTagSync
 	{
 		get
 		{
-			return _enabled;
+			return CoopConfig.ShowNames?.Value ?? true;
 		}
 		set
 		{
-			if (_enabled != value)
+			if (Enabled != value && CoopConfig.ShowNames != null)
 			{
-				_enabled = value;
-				Plugin.Log.LogInfo("[PeerNameTagSync] nome do peer em cima do personagem " + (_enabled ? "LIGADO" : "desligado") + ".");
+				CoopConfig.ShowNames.Value = value;
+				CoopNotice.Show(value ? "Player names: ON" : "Player names: OFF", 3f);
 			}
 		}
 	}
@@ -41,7 +40,7 @@ public static class PeerNameTagSync
 
 	public static void Draw(CoopSession session, RemotePlayerPuppet peerPuppet)
 	{
-		if (!_enabled || session == null || (Object)(object)peerPuppet == (Object)null || !peerPuppet.HasState)
+		if (!Enabled || session == null || (Object)(object)peerPuppet == (Object)null || !peerPuppet.HasState)
 		{
 			return;
 		}

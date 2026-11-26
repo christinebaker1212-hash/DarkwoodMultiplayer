@@ -11,10 +11,10 @@ using Object = UnityEngine.Object;
 
 namespace DarkwoodCoopOnline;
 
-[BepInPlugin("com.felipe.darkwoodcooponline", "Darkwood Co-op Online", "0.4.2")]
+[BepInPlugin("com.felipe.darkwoodcooponline", "Darkwood Co-op Online", "0.4.3")]
 public class Plugin : BaseUnityPlugin
 {
-	public const string Version = "0.4.2";
+	public const string Version = "0.4.3";
 
 	internal static TimestampedLogSource Log;
 
@@ -69,14 +69,14 @@ public class Plugin : BaseUnityPlugin
 		Log = new TimestampedLogSource(Logger);
 		Instance = this;
 		Version version = Assembly.GetExecutingAssembly().GetName().Version;
-		Version version2 = new Version("0.4.2.0");
+		Version version2 = new Version("0.4.3.0");
 		if (version != version2)
 		{
-			Log.LogError("[VersionCheck] DESSINCRONIA: Plugin.Version='0.4.2' mas AssemblyVersion " + $"compilada='{version}' - alguém bumpou só um dos dois (Properties/AssemblyInfo.cs " + "precisa acompanhar Plugin.Version SEMPRE). Corrija antes de publicar.");
+			Log.LogError("[VersionCheck] DESSINCRONIA: Plugin.Version='0.4.3' mas AssemblyVersion " + $"compilada='{version}' - alguém bumpou só um dos dois (Properties/AssemblyInfo.cs " + "precisa acompanhar Plugin.Version SEMPRE). Corrija antes de publicar.");
 		}
 		else
 		{
-			Log.LogInfo("[VersionCheck] OK - Plugin.Version e AssemblyVersion batem (0.4.2).");
+			Log.LogInfo("[VersionCheck] OK - Plugin.Version e AssemblyVersion batem (0.4.3).");
 		}
 		Application.runInBackground = true;
 		CoopConfig.Bind(((BaseUnityPlugin)this).Config);
@@ -87,6 +87,7 @@ public class Plugin : BaseUnityPlugin
 		Log.LogInfo($"=== Darkwood Co-op Online {Version} ({Proto.MaxPlayers} players) loaded ===  HOST/JOIN from the main menu, F10 = leave, 0 = co-op window, ~ = debug panel");
 		DownedSync.EnsurePatched("com.felipe.darkwoodcooponline");
 		PlayerDamageSync.EnsurePatched("com.felipe.darkwoodcooponline");
+		EnemySync.EnsurePatched("com.felipe.darkwoodcooponline");
 		NightEventSync.EnsurePatched("com.felipe.darkwoodcooponline");
 		DamageDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline");
 		NpcDeathDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline");
@@ -380,9 +381,15 @@ public class Plugin : BaseUnityPlugin
 		SaveSlotPickerUI.Draw();
 		VoiceSettingsUI.Draw();
 		LobbySync.Draw();
-		if (_showOverlay && _session != null)
+		// co-op info only when you want it: in the pause menu, or while holding Tab
+		bool flag = CoopUI.PauseMenuOpen;
+		if (_showOverlay && _session != null && (flag || Input.GetKey((KeyCode)9)))
 		{
 			CoopUI.DrawHud(_session);
+		}
+		if (flag && _session != null)
+		{
+			CoopUI.DrawPauseBox(_session);
 		}
 		if (_showDebugPanel)
 		{
@@ -393,7 +400,10 @@ public class Plugin : BaseUnityPlugin
 			_connectionPanelRect = GUILayout.Window(918274, _connectionPanelRect, new GUI.WindowFunction(DrawConnectionPanel), "Darkwood Co-op - Connection", Array.Empty<GUILayoutOption>());
 		}
 		DrawBottomStatus();
-		DrawCredit();
+		if (Core.mainMenu || flag)
+		{
+			DrawCredit();
+		}
 		if (_session != null && _session.Linked)
 		{
 			DownedUI.Draw(CoopPeers.Nearest((Object)(object)Player.Instance != (Object)null ? ((Component)Player.Instance).transform.position : Vector3.zero, (RemotePlayerPuppet pp) => DownedSync.IsPeerDowned(pp.Slot)) ?? _session.Puppet);

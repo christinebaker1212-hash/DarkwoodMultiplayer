@@ -1,4 +1,4 @@
-DARKWOOD CO-OP ONLINE - 4 PLAYERS  (v0.4.2)
+DARKWOOD CO-OP ONLINE - 4 PLAYERS  (v0.4.3)
 ===========================================
 
 Up to 4 players in one Darkwood world. Networking works like Moemon Emerald Kai
@@ -29,8 +29,12 @@ which save slot it goes into.
 
 IN THE GAME
 -----------
-  F       start the game (host, in the lobby) / hold next to a downed friend to revive
-  N       show / hide names above players
+  F       start the game (host, in the lobby)
+  hold F  next to a downed friend to revive them (3.5 s). When someone is down
+          the top of the screen says so, and a marker shows where they are.
+  N       player names on / off (also in the CO-OP box of the pause menu)
+  Tab     hold to see the co-op info (players, ping, invite code); it also
+          shows in the pause menu
   0       co-op window: players, ping, invite code, addresses, leave
   F1      teleport to the nearest friend (if you're stuck)
   F10     leave the game (host: stop hosting)

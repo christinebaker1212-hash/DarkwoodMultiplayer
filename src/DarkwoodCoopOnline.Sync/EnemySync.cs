@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 using DarkwoodCoopOnline.Net;
@@ -1184,9 +1185,87 @@ public static class EnemySync
 			}
 			value.dayDied = dayDied;
 			SetDeathAnim(value, text2);
-			((CharBase)value).getHit(99999f, (Transform)null, flag, false, false, true, false, true, true);
+			_applyingDeath = true;
+			try
+			{
+				((CharBase)value).getHit(99999f, (Transform)null, flag, false, false, true, false, true, true);
+			}
+			finally
+			{
+				_applyingDeath = false;
+			}
 			Plugin.Log.LogInfo($"[EnemySync] morte aplicada no puppet: id={text} name='{((Object)value).name}' cutInHalf={flag} deathAnim='{text2}'");
 			RemovePuppetTracking(text);
+		}
+	}
+
+	// ---- a puppet never dies on its own ----
+	// Our copy of an enemy someone else's game runs used to die here when we landed the killing blow,
+	// while the real one (with a little more health there) lived on: a corpse that kept getting moved
+	// around and couldn't be hit any more. Now the hit's damage beyond "1 health left" goes straight to
+	// the owner as a hit request, and the death comes back from the owner like any other.
+	private static bool _patched;
+
+	private static bool _applyingDeath;
+
+	public static void EnsurePatched(string modId)
+	{
+		if (_patched)
+		{
+			return;
+		}
+		_patched = true;
+		try
+		{
+			MethodInfo method = HarmonyLib.AccessTools.Method(typeof(CharBase), "getHit", new System.Type[9]
+			{
+				typeof(float),
+				typeof(Transform),
+				typeof(bool),
+				typeof(bool),
+				typeof(bool),
+				typeof(bool),
+				typeof(bool),
+				typeof(bool),
+				typeof(bool)
+			}, (System.Type[])null);
+			HarmonyLib.Harmony harmony = new HarmonyLib.Harmony(modId + ".puppetdeath");
+			HarmonyLib.HarmonyMethod prefix = new HarmonyLib.HarmonyMethod(typeof(EnemySync), "PuppetGetHitPrefix", (System.Type[])null);
+			harmony.Patch((System.Reflection.MethodBase)method, prefix, (HarmonyLib.HarmonyMethod)null, (HarmonyLib.HarmonyMethod)null, (HarmonyLib.HarmonyMethod)null, (HarmonyLib.HarmonyMethod)null);
+			// enemies may have their own getHit: guard that one too
+			MethodInfo methodInfo = HarmonyLib.AccessTools.DeclaredMethod(typeof(Character), "getHit", method.GetParameters().Select((System.Reflection.ParameterInfo p) => p.ParameterType).ToArray(), (System.Type[])null);
+			if (methodInfo != null && methodInfo != method)
+			{
+				harmony.Patch((System.Reflection.MethodBase)methodInfo, prefix, (HarmonyLib.HarmonyMethod)null, (HarmonyLib.HarmonyMethod)null, (HarmonyLib.HarmonyMethod)null, (HarmonyLib.HarmonyMethod)null);
+			}
+		}
+		catch (System.Exception ex)
+		{
+			Plugin.Log.LogWarning("[EnemySync] puppet death guard not installed: " + ex.Message);
+		}
+	}
+
+	private static void PuppetGetHitPrefix(CharBase __instance, ref float damage)
+	{
+		if (_applyingDeath || damage <= 0f || !CoopRuntime.SessionActive || !(__instance is Character c) || !__instance.alive)
+		{
+			return;
+		}
+		string text = FindPuppetId(c);
+		if (text == null)
+		{
+			return;
+		}
+		float num = Mathf.Max(0f, __instance.health - 1f);
+		if (!(damage <= num))
+		{
+			float item = damage - num;
+			damage = num;
+			if (_pendingHits == null)
+			{
+				_pendingHits = new List<(string, float)>();
+			}
+			_pendingHits.Add((text, item));
 		}
 	}
 

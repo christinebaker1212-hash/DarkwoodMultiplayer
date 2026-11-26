@@ -7,7 +7,7 @@ relay server, friends join with an **invite code**, and the whole thing is tuned
 
 ## Install
 
-1. Download `DarkwoodCoopOnline-4P-v0.4.2.zip` (in [`release/`](release/)).
+1. Download `DarkwoodCoopOnline-4P-v0.4.3.zip` (in [`release/`](release/)).
 2. Unzip it **into the Darkwood game folder** (the one with `Darkwood.exe`), so that `winhttp.dll`,
    `doorstop_config.ini` and the `BepInEx` folder sit next to `Darkwood.exe`.
    If you had the old 2-player mod, just let it overwrite.
@@ -23,11 +23,14 @@ On the main menu there are two new entries:
 | **JOIN A GAME** | **REJOIN &lt;last game&gt;** (no typing), **ENTER INVITE CODE OR IP**, games on your home network (listed automatically) and Steam friends who are hosting. The host's world is downloaded straight from them, you pick a save slot for it the first time, and you're in. |
 
 * Up to **4 players**. Friends can join or leave at any time; the host keeps playing.
-* Everyone's name is shown above them (**N** hides/shows names). The top of the screen shows who's
-  in, your ping, and (for the host) the invite code. Press **0** for the co-op window
+* Everyone's name is shown above them. Turn names off with **N** or in the **CO-OP box of the pause
+  menu** (also `ShowNames` in the config). The co-op info (players, ping, invite code) and the mod's
+  credits only show in the **pause menu**, or while you hold **Tab**. Press **0** for the co-op window
   (players, addresses, copy code, leave). **F10** leaves the game.
-* Downed instead of dead: when you drop, any other player can **hold F** next to you to revive you.
-  If everyone is down — or someone bleeds out — it's a party wipe (everyone's day/clock stays together).
+* **Downed instead of dead:** when a friend drops, the top of everyone's screen says so with the time
+  they have left, and a marker shows where they are (at the edge of the screen if they're off it).
+  Walk up to them and **hold F** for 3.5 seconds (the marker turns into "HOLD F" when you're close).
+  If everyone is down — or someone bleeds out after 75 s — it's a party wipe (everyone's day/clock stays together).
 * Proximity voice chat works per player (turn it on in the config / voice settings).
 * Steam: friends can also use **Join game** from the Steam friends list.
 

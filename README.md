@@ -7,7 +7,7 @@ relay server, friends join with an **invite code**, and the whole thing is tuned
 
 ## Install
 
-1. Download `DarkwoodCoopOnline-4P-v0.4.5.zip` (in [`release/`](release/)).
+1. Download `DarkwoodCoopOnline-4P-v0.4.6.zip` (in [`release/`](release/)).
 2. Unzip it **into the Darkwood game folder** (the one with `Darkwood.exe`), so that `winhttp.dll`,
    `doorstop_config.ini` and the `BepInEx` folder sit next to `Darkwood.exe`.
    If you had the old 2-player mod, just let it overwrite.
@@ -76,6 +76,14 @@ Radmin, Hamachi or port forwarding with the Steam version of Darkwood.
   developer debug hotkeys (some start per-frame log streams) are off unless `Debug.DiagnosticHotkeys` is on.
 * Enemy line-of-sight aggro checks run 5×/s instead of 20×/s per player; full-scene object searches on
   incoming interactions come from a cache.
+
+## Custom character skins (step 1: export the art)
+
+Load into a world and press **F5**. The mod saves every sprite sheet the player character uses (torso and
+legs, for every item you can hold, plus the naked/epilogue variants) to **`CoopSkins\export`** in the
+Darkwood folder and opens it. `frames.json` lists every animation frame (library, clip, frame, sheet and
+pixel rectangle). Only one player needs to do it: zip the folder and send it to whoever makes the skins.
+The key is `[Skins] ExportKey` in the config (`None` turns it off). Loading skins per player is the next step.
 
 ## Settings
 

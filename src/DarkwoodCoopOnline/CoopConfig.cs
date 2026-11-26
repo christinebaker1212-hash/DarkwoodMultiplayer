@@ -32,6 +32,8 @@ public static class CoopConfig
 
 	public static ConfigEntry<UnityEngine.KeyCode> ReviveButton;
 
+	public static ConfigEntry<UnityEngine.KeyCode> SkinExportKey;
+
 	public static void Bind(ConfigFile cfg)
 	{
 		PlayerName = cfg.Bind("Co-op", "PlayerName", "", "Your name above your character (empty: your Steam name, or 'Player')");
@@ -53,6 +55,15 @@ public static class CoopConfig
 			// (the setting just isn't there; F and the interact button still revive)
 			Plugin.Log?.LogWarning("[Startup] ReviveControllerButton setting unavailable: " + ex.Message);
 			ReviveButton = null;
+		}
+		try
+		{
+			SkinExportKey = cfg.Bind("Skins", "ExportKey", (UnityEngine.KeyCode)286, "In a loaded world, saves the player character's sprite sheets (every item's animations) to the CoopSkins/export folder in the game folder, for making custom skins. F5 by default; None = off.");
+		}
+		catch (Exception ex2)
+		{
+			Plugin.Log?.LogWarning("[Startup] Skins.ExportKey setting unavailable: " + ex2.Message);
+			SkinExportKey = null;
 		}
 		ShowNames = cfg.Bind("Co-op", "ShowNames", true, "Show other players' names above them (also: N in game, or the co-op box in the pause menu)");
 	}

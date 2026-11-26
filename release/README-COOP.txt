@@ -1,4 +1,4 @@
-DARKWOOD CO-OP ONLINE - 4 PLAYERS  (v0.4.6)
+DARKWOOD CO-OP ONLINE - 4 PLAYERS  (v0.4.7)
 ===========================================
 
 Up to 4 players in one Darkwood world. Networking works like Moemon Emerald Kai
@@ -42,6 +42,7 @@ IN THE GAME
   F10     leave the game (host: stop hosting)
   ~       debug panel (stuck cutscene / dream fixes)
   F5      export the character's sprite sheets for making custom skins (see below)
+  F6      switch to the next skin in CoopSkins (and back to the normal look)
 
 HOW THE CODE WORKS
 ------------------
@@ -61,11 +62,18 @@ item) plus frames.json, the map of which frame is where. Zip that whole export
 folder and send it to whoever is making the skins.
 Change or turn off the key: [Skins] ExportKey in the config.
 
+CUSTOM CHARACTER SKINS - STEP 2: WEAR ONE
+-----------------------------------------
+A skin is a folder in CoopSkins (for example CoopSkins\bunny) with repainted
+copies of the exported sheets, same file names. Everyone puts the same skin
+folders in their CoopSkins. In game, F6 switches your own skin; everyone else
+sees it on you. Friends without that folder just see you normally.
+
 SETTINGS
 --------
 BepInEx\config\com.felipe.darkwoodcooponline.cfg
   [Co-op]  PlayerName, ServerName, ServerPassword, WelcomeNote, OpenRouter
-  [Skins]  ExportKey (F5)
+  [Skins]  ExportKey (F5), CycleKey (F6), MySkin (your skin's folder name)
   [Debug]  VerboseLog = true only when reporting a bug (send BepInEx\LogOutput.log)
 
 Original 2-player mod by Felipesfx. Darkwood by Acid Wizard Studio.

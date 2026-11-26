@@ -7,7 +7,7 @@ relay server, friends join with an **invite code**, and the whole thing is tuned
 
 ## Install
 
-1. Download `DarkwoodCoopOnline-4P-v0.4.6.zip` (in [`release/`](release/)).
+1. Download `DarkwoodCoopOnline-4P-v0.4.7.zip` (in [`release/`](release/)).
 2. Unzip it **into the Darkwood game folder** (the one with `Darkwood.exe`), so that `winhttp.dll`,
    `doorstop_config.ini` and the `BepInEx` folder sit next to `Darkwood.exe`.
    If you had the old 2-player mod, just let it overwrite.
@@ -83,7 +83,15 @@ Load into a world and press **F5**. The mod saves every sprite sheet the player 
 legs, for every item you can hold, plus the naked/epilogue variants) to **`CoopSkins\export`** in the
 Darkwood folder and opens it. `frames.json` lists every animation frame (library, clip, frame, sheet and
 pixel rectangle). Only one player needs to do it: zip the folder and send it to whoever makes the skins.
-The key is `[Skins] ExportKey` in the config (`None` turns it off). Loading skins per player is the next step.
+The key is `[Skins] ExportKey` in the config (`None` turns it off). The log lists every animation set name it
+found and any it couldn't load.
+
+**Wearing a skin:** a skin is a folder in `CoopSkins` (e.g. `CoopSkins\bunny`) with repainted copies of the
+exported sheets under the same file names (in an `atlases` subfolder or directly in the folder; sheets it
+leaves out keep the game's art; a sheet may be exactly 2×/3×/4× the original size). **F6** cycles your skin
+(`[Skins] MySkin`, `CycleKey`), and your choice is sent to everyone: each player's character is drawn with
+their own skin through a per-renderer texture override, so four players can look four different ways.
+Everyone needs the same skin folders.
 
 ## Settings
 

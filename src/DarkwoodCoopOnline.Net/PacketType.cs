@@ -96,5 +96,6 @@ public enum PacketType : byte
 	PrologueStatusRequest = 135,
 	PrologueStatusResponse = 136,
 	NpcDespawnedByLocation = 137,
-	CutsceneForceEnded = 138
+	CutsceneForceEnded = 138,
+	PlayerSkin = 139
 }

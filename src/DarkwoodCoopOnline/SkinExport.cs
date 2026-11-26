@@ -136,17 +136,46 @@ public static class SkinExport
 		List<string> names = LibraryNames();
 		var libs = new List<UnityEngine.Object>();
 		var seenLib = new HashSet<string>();
+		var missing = new List<string>();
+		tk2dSpriteAnimation[] inMemory = Resources.FindObjectsOfTypeAll<tk2dSpriteAnimation>();
 		foreach (string n in names)
 		{
 			if (!seenLib.Add(n))
 			{
 				continue;
 			}
-			UnityEngine.Object lib = Resources.Load(n, typeof(tk2dSpriteAnimation));
-			if (lib != (UnityEngine.Object)null)
+			UnityEngine.Object lib = null;
+			try
+			{
+				lib = Resources.Load(n, typeof(tk2dSpriteAnimation));
+			}
+			catch
+			{
+			}
+			if (lib == (UnityEngine.Object)null)
+			{
+				// already in memory under that name (not every library has to sit in a Resources folder)
+				foreach (tk2dSpriteAnimation l in inMemory)
+				{
+					if ((UnityEngine.Object)(object)l != (UnityEngine.Object)null && ((UnityEngine.Object)l).name == n)
+					{
+						lib = l;
+						break;
+					}
+				}
+			}
+			if (lib != (UnityEngine.Object)null && !libs.Contains(lib))
 			{
 				libs.Add(lib);
 			}
+			else if (lib == (UnityEngine.Object)null)
+			{
+				missing.Add(n);
+			}
+		}
+		if (missing.Count > 0)
+		{
+			Plugin.Log.LogInfo("[SkinExport] not found (normal for naked/epilogue variants that don't exist): " + string.Join(", ", missing.ToArray()));
 		}
 		// whatever is on the player right now, even if it isn't loadable by name
 		AddLive(libs, seenLib, (Player.Instance.torsoAnimator != null) ? Player.Instance.torsoAnimator.Library : null);
@@ -186,7 +215,7 @@ public static class SkinExport
 					{
 						info = new CollectionInfo
 						{
-							Name = UniqueName(Safe((Get(coll, "spriteCollectionName") as string) ?? coll.name), collectionOrder),
+							Name = UniqueName(SafeName((Get(coll, "spriteCollectionName") as string) ?? coll.name), collectionOrder),
 							Data = coll,
 							Premultiplied = Get(coll, "premultipliedAlpha") is bool pm && pm
 						};
@@ -257,32 +286,99 @@ public static class SkinExport
 	private static List<string> LibraryNames()
 	{
 		var baseNames = new List<string> { "PlayerNoneAnims" };
-		ItemsDatabase db = Singleton<ItemsDatabase>.Instance;
-		if ((UnityEngine.Object)(object)db != (UnityEngine.Object)null && Get(db, "itemsKeys") is IEnumerable keys)
+		var log = new StringBuilder();
+		void AddItem(InvItem item)
 		{
-			foreach (object k in keys)
+			if ((UnityEngine.Object)(object)item != (UnityEngine.Object)null && Get(item, "aniLibrary") is string lib && !string.IsNullOrEmpty(lib) && !baseNames.Contains(lib))
 			{
-				if (!(k is string key))
-				{
-					continue;
-				}
-				try
-				{
-					InvItem item = db.getItem(key, false);
-					if ((UnityEngine.Object)(object)item != (UnityEngine.Object)null && Get(item, "aniLibrary") is string lib && !string.IsNullOrEmpty(lib))
-					{
-						baseNames.Add(lib);
-					}
-				}
-				catch
-				{
-				}
+				baseNames.Add(lib);
 			}
+		}
+
+		// 1) the item database: both its serialized key list and the dictionary getItem() actually uses
+		ItemsDatabase db = null;
+		try
+		{
+			db = Singleton<ItemsDatabase>.Instance;
+		}
+		catch (Exception ex)
+		{
+			log.Append(" db:" + ex.GetType().Name);
+		}
+		if ((UnityEngine.Object)(object)db == (UnityEngine.Object)null)
+		{
+			log.Append(" db:none");
 		}
 		else
 		{
-			Plugin.Log.LogWarning("[SkinExport] item list not readable - exporting only the bare-handed and current animations");
+			var keys = new List<string>();
+			if (Get(db, "itemsDict") is IDictionary dict)
+			{
+				foreach (object k in dict.Keys)
+				{
+					if (k is string s && !keys.Contains(s)) keys.Add(s);
+				}
+			}
+			if (Get(db, "itemsKeys") is IEnumerable list)
+			{
+				foreach (object k in list)
+				{
+					if (k is string s && !keys.Contains(s)) keys.Add(s);
+				}
+			}
+			int ok = 0, failed = 0;
+			foreach (string key in keys)
+			{
+				try
+				{
+					InvItem item = db.getItem(key, false);
+					if ((UnityEngine.Object)(object)item != (UnityEngine.Object)null) ok++;
+					AddItem(item);
+				}
+				catch
+				{
+					failed++;
+				}
+			}
+			log.Append($" db:{keys.Count} keys, {ok} items, {failed} errors");
 		}
+
+		// 2) every item prefab/instance already in memory (the game loads them all at startup)
+		int loaded = 0;
+		try
+		{
+			foreach (InvItem item in Resources.FindObjectsOfTypeAll<InvItem>())
+			{
+				loaded++;
+				AddItem(item);
+			}
+		}
+		catch (Exception ex2)
+		{
+			log.Append(" loadedItems:" + ex2.GetType().Name);
+		}
+		log.Append($" loadedItems:{loaded}");
+
+		// 3) any player animation library already in memory
+		int libsInMemory = 0;
+		try
+		{
+			foreach (tk2dSpriteAnimation lib in Resources.FindObjectsOfTypeAll<tk2dSpriteAnimation>())
+			{
+				string n = ((UnityEngine.Object)(object)lib != (UnityEngine.Object)null) ? ((UnityEngine.Object)lib).name : null;
+				if (!string.IsNullOrEmpty(n) && n.StartsWith("Player", StringComparison.Ordinal) && !baseNames.Contains(n))
+				{
+					baseNames.Add(n);
+					libsInMemory++;
+				}
+			}
+		}
+		catch (Exception ex3)
+		{
+			log.Append(" loadedLibs:" + ex3.GetType().Name);
+		}
+		log.Append($" loadedLibs:+{libsInMemory}");
+		Plugin.Log.LogInfo($"[SkinExport] animation set names: {baseNames.Count} ({log.ToString().Trim()}): {string.Join(", ", baseNames.ToArray())}");
 		var all = new List<string>(baseNames);
 		foreach (string n in baseNames)
 		{
@@ -455,7 +551,7 @@ public static class SkinExport
 		return null;
 	}
 
-	private static string Safe(string s)
+	public static string SafeName(string s)
 	{
 		if (string.IsNullOrEmpty(s))
 		{

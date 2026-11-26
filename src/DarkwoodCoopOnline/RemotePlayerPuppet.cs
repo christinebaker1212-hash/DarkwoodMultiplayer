@@ -198,6 +198,11 @@ public sealed class RemotePlayerPuppet : CharBase
 
 	public bool HasState => _hasState;
 
+	// for SkinSync: the two sprites that draw this player
+	internal GameObject TorsoObject => ((Object)(object)_torso != (Object)null) ? ((Component)_torso).gameObject : null;
+
+	internal GameObject LegsObject => ((Object)(object)_legs != (Object)null) ? ((Component)_legs).gameObject : null;
+
 	public float TargetAim => _targetAim;
 
 	public Light2D DebugLanternLight

@@ -11,10 +11,10 @@ using Object = UnityEngine.Object;
 
 namespace DarkwoodCoopOnline;
 
-[BepInPlugin("com.felipe.darkwoodcooponline", "Darkwood Co-op Online", "0.4.4")]
+[BepInPlugin("com.felipe.darkwoodcooponline", "Darkwood Co-op Online", "0.4.5")]
 public class Plugin : BaseUnityPlugin
 {
-	public const string Version = "0.4.4";
+	public const string Version = "0.4.5";
 
 	internal static TimestampedLogSource Log;
 
@@ -69,79 +69,80 @@ public class Plugin : BaseUnityPlugin
 		Log = new TimestampedLogSource(Logger);
 		Instance = this;
 		Version version = Assembly.GetExecutingAssembly().GetName().Version;
-		Version version2 = new Version("0.4.4.0");
+		Version version2 = new Version("0.4.5.0");
 		if (version != version2)
 		{
-			Log.LogError("[VersionCheck] DESSINCRONIA: Plugin.Version='0.4.4' mas AssemblyVersion " + $"compilada='{version}' - alguém bumpou só um dos dois (Properties/AssemblyInfo.cs " + "precisa acompanhar Plugin.Version SEMPRE). Corrija antes de publicar.");
+			Log.LogError("[VersionCheck] DESSINCRONIA: Plugin.Version='0.4.5' mas AssemblyVersion " + $"compilada='{version}' - alguém bumpou só um dos dois (Properties/AssemblyInfo.cs " + "precisa acompanhar Plugin.Version SEMPRE). Corrija antes de publicar.");
 		}
 		else
 		{
-			Log.LogInfo("[VersionCheck] OK - Plugin.Version e AssemblyVersion batem (0.4.4).");
+			Log.LogInfo("[VersionCheck] OK - Plugin.Version e AssemblyVersion batem (0.4.5).");
 		}
 		Application.runInBackground = true;
-		CoopConfig.Bind(((BaseUnityPlugin)this).Config);
+		ConfigFile cfg = ((BaseUnityPlugin)this).Config;
+		SafeStart("Config", delegate { CoopConfig.Bind(cfg); });
 		TimestampedLogSource.Verbose = ((BaseUnityPlugin)this).Config.Bind<bool>("Debug", "VerboseLog", false, "Write the mod's detailed diagnostics to the log (big log files, a little slower). Turn on only to report a bug.").Value;
 		_debugKeys = ((BaseUnityPlugin)this).Config.Bind<bool>("Debug", "DiagnosticHotkeys", false, "Developer diagnostic keys (F11/F12/Insert/Home/End/Delete/PageUp/PageDown/Backspace/keypad). Several start per-frame logging that slows the game - leave off unless you are debugging.");
 		_voiceEnabled = ((BaseUnityPlugin)this).Config.Bind<bool>("Voice", "Enabled", false, "Voice chat por proximidade (grava do microfone só durante sessão pareada)");
 		_voiceDevice = ((BaseUnityPlugin)this).Config.Bind<string>("Voice", "Device", "", "Nome do dispositivo de microfone (Microphone.devices) — vazio usa o 1º disponível");
 		Log.LogInfo($"=== Darkwood Co-op Online {Version} ({Proto.MaxPlayers} players) loaded ===  HOST/JOIN from the main menu, F10 = leave, 0 = co-op window, ~ = debug panel");
-		DownedSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		PlayerDamageSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		EnemySync.EnsurePatched("com.felipe.darkwoodcooponline");
-		NightEventSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		DamageDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline");
-		NpcDeathDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline");
-		PuppetAttackSuppress.EnsurePatched("com.felipe.darkwoodcooponline");
-		PuppetAnimSuppress.EnsurePatched("com.felipe.darkwoodcooponline");
-		MainMenuNativeButtons.EnsurePatched("com.felipe.darkwoodcooponline");
-		DurabilityDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline");
-		ItemBurnSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		MonsterRangedAttackSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		WildlifeRespawnSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		EnemyHitAnimSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		LiquidSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		LocationOwnership.EnsurePatched("com.felipe.darkwoodcooponline");
-		MapPauseSuppress.EnsurePatched("com.felipe.darkwoodcooponline");
-		JournalPauseSuppress.EnsurePatched("com.felipe.darkwoodcooponline");
-		OvenPauseSuppress.EnsurePatched("com.felipe.darkwoodcooponline");
-		UiPauseSuppress.EnsurePatched("com.felipe.darkwoodcooponline");
-		EscMenuPauseSuppress.EnsurePatched("com.felipe.darkwoodcooponline");
-		DreamTransitionPauseSuppress.EnsurePatched("com.felipe.darkwoodcooponline");
-		FlareSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		NightScenarioSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		FlagSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		ChapterTransitionSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		WorldGenDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline");
-		TrapSpawnSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		TrapPlaceSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		FirearmFxSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		ThrownItemSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		WorldEventSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		CharacterMessageSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		MapMarkerSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		LocationDiscoverySync.EnsurePatched("com.felipe.darkwoodcooponline");
-		OutsideLocationSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		DreamSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		DoorLockEventSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		GameObjectActionSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		ReturnToMenuSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		QuestEventDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline");
-		CutsceneDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline");
-		QuestSpawnSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		WildlifeActivationSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		PlayerActionSoundSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		MorningRitualSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		ExplodableSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		DebugCheatKeys.EnsurePatched("com.felipe.darkwoodcooponline");
-		BansheeScreamSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		InSightSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		PropSpawnSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		CharacterSaveSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		PrologueDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline");
-		PrologueEncounterPullSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		WorldSync.EnsurePatched("com.felipe.darkwoodcooponline");
-		LanSaveTransfer.EnsurePatched("com.felipe.darkwoodcooponline");
-		PrologueJoinSync.EnsurePatched();
+		SafeStart("DownedSync", delegate { DownedSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("PlayerDamageSync", delegate { PlayerDamageSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("NightEventSync", delegate { NightEventSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("DamageDiagnostics", delegate { DamageDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("NpcDeathDiagnostics", delegate { NpcDeathDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("PuppetAttackSuppress", delegate { PuppetAttackSuppress.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("PuppetAnimSuppress", delegate { PuppetAnimSuppress.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("MainMenuNativeButtons", delegate { MainMenuNativeButtons.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("DurabilityDiagnostics", delegate { DurabilityDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("ItemBurnSync", delegate { ItemBurnSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("MonsterRangedAttackSync", delegate { MonsterRangedAttackSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("WildlifeRespawnSync", delegate { WildlifeRespawnSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("EnemyHitAnimSync", delegate { EnemyHitAnimSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("LiquidSync", delegate { LiquidSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("LocationOwnership", delegate { LocationOwnership.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("MapPauseSuppress", delegate { MapPauseSuppress.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("JournalPauseSuppress", delegate { JournalPauseSuppress.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("OvenPauseSuppress", delegate { OvenPauseSuppress.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("UiPauseSuppress", delegate { UiPauseSuppress.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("EscMenuPauseSuppress", delegate { EscMenuPauseSuppress.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("DreamTransitionPauseSuppress", delegate { DreamTransitionPauseSuppress.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("FlareSync", delegate { FlareSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("NightScenarioSync", delegate { NightScenarioSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("FlagSync", delegate { FlagSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("ChapterTransitionSync", delegate { ChapterTransitionSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("WorldGenDiagnostics", delegate { WorldGenDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("TrapSpawnSync", delegate { TrapSpawnSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("TrapPlaceSync", delegate { TrapPlaceSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("FirearmFxSync", delegate { FirearmFxSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("ThrownItemSync", delegate { ThrownItemSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("WorldEventSync", delegate { WorldEventSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("CharacterMessageSync", delegate { CharacterMessageSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("MapMarkerSync", delegate { MapMarkerSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("LocationDiscoverySync", delegate { LocationDiscoverySync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("OutsideLocationSync", delegate { OutsideLocationSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("DreamSync", delegate { DreamSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("DoorLockEventSync", delegate { DoorLockEventSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("GameObjectActionSync", delegate { GameObjectActionSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("ReturnToMenuSync", delegate { ReturnToMenuSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("QuestEventDiagnostics", delegate { QuestEventDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("CutsceneDiagnostics", delegate { CutsceneDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("QuestSpawnSync", delegate { QuestSpawnSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("WildlifeActivationSync", delegate { WildlifeActivationSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("PlayerActionSoundSync", delegate { PlayerActionSoundSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("MorningRitualSync", delegate { MorningRitualSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("ExplodableSync", delegate { ExplodableSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("DebugCheatKeys", delegate { DebugCheatKeys.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("BansheeScreamSync", delegate { BansheeScreamSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("InSightSync", delegate { InSightSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("PropSpawnSync", delegate { PropSpawnSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("CharacterSaveSync", delegate { CharacterSaveSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("PrologueDiagnostics", delegate { PrologueDiagnostics.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("PrologueEncounterPullSync", delegate { PrologueEncounterPullSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("WorldSync", delegate { WorldSync.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("LanSaveTransfer", delegate { LanSaveTransfer.EnsurePatched("com.felipe.darkwoodcooponline"); });
+		SafeStart("PrologueJoinSync", delegate { PrologueJoinSync.EnsurePatched(); });
+		SafeStart("EnemySync", delegate { EnemySync.EnsurePatched("com.felipe.darkwoodcooponline"); });
 		SteamAvailability.LogOnce();
 		if (SteamAvailability.Available)
 		{
@@ -155,6 +156,20 @@ public class Plugin : BaseUnityPlugin
 			}
 		}
 		VoiceSync.Configure(_voiceEnabled.Value, _voiceDevice.Value);
+	}
+
+	// One part failing to start (a game update changed a method it patches...) must not take the rest of
+	// the mod - the HOST / JOIN buttons included - down with it
+	private static void SafeStart(string what, Action start)
+	{
+		try
+		{
+			start();
+		}
+		catch (Exception ex)
+		{
+			Log.LogError("[Startup] " + what + " failed to start (the rest of the mod keeps going): " + ex);
+		}
 	}
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
@@ -184,7 +199,43 @@ public class Plugin : BaseUnityPlugin
 		VoiceSync.SetDevice(device);
 	}
 
+	private string _lastUpdateError;
+
 	private void Update()
+	{
+		// the main menu's HOST / JOIN first, on their own: nothing else failing may hide them
+		try
+		{
+			MainMenuNativeButtons.Tick();
+			MainMenuNativeButtons.TickPendingLabels();
+			MainMenuHostJoinUI.Tick();
+			CoopMenuList.Tick();
+		}
+		catch (Exception ex)
+		{
+			ReportUpdateError("menu", ex);
+		}
+		try
+		{
+			UpdateCoop();
+		}
+		catch (Exception ex2)
+		{
+			ReportUpdateError("update", ex2);
+		}
+	}
+
+	private void ReportUpdateError(string where, Exception ex)
+	{
+		string text = where + ": " + ex.GetType().Name + ": " + ex.Message;
+		if (text != _lastUpdateError)
+		{
+			_lastUpdateError = text;
+			Log.LogError("[Startup] " + where + " error (shown once): " + ex);
+		}
+	}
+
+	private void UpdateCoop()
 	{
 		PauseSync.ReassertTimeScale();
 		PerfDiagnostics.FrameStart();
@@ -307,10 +358,6 @@ public class Plugin : BaseUnityPlugin
 		}
 		AnimationSyncDiagnostics.Tick();
 		DayTransitionDiagnostics.Tick();
-		MainMenuHostJoinUI.Tick();
-		MainMenuNativeButtons.Tick();
-		MainMenuNativeButtons.TickPendingLabels();
-		CoopMenuList.Tick();
 		LanSaveTransfer.Tick();
 		PrologueJoinSync.Tick();
 		if (Input.GetKeyDown((KeyCode)291))
@@ -375,7 +422,26 @@ public class Plugin : BaseUnityPlugin
 
 	private void OnGUI()
 	{
-		MainMenuHostJoinUI.Draw();
+		try
+		{
+			MainMenuHostJoinUI.Draw();
+		}
+		catch (Exception ex)
+		{
+			ReportUpdateError("menu draw", ex);
+		}
+		try
+		{
+			DrawCoopGui();
+		}
+		catch (Exception ex2)
+		{
+			ReportUpdateError("draw", ex2);
+		}
+	}
+
+	private void DrawCoopGui()
+	{
 		CoopUI.Draw();
 		CoopNotice.Draw();
 		SaveSlotPickerUI.Draw();

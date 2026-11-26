@@ -180,6 +180,11 @@ public static class CoopUI
 
 	public static void Tick()
 	{
+		// we hid the game's menu but no co-op screen is open any more: always give it back
+		if ((Object)(object)_hiddenMenu != (Object)null && _panel == Panel.None && !JoinFlow.Busy && JoinFlow.Current != JoinFlow.Step.Failed)
+		{
+			RestoreNativeMenu();
+		}
 		// left the main menu: the screens are done (nothing to restore)
 		if (_panel != Panel.None && !Core.mainMenu)
 		{

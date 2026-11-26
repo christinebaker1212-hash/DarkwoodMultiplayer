@@ -42,6 +42,19 @@ public static class MainMenuNativeButtons
 
 	private static int _colliderGuardFrames;
 
+	// HOST and JOIN exist and are on screen right now
+	public static bool Visible
+	{
+		get
+		{
+			if (Created && ((Component)_hostBtn).gameObject.activeInHierarchy)
+			{
+				return ((Component)_joinBtn).gameObject.activeInHierarchy;
+			}
+			return false;
+		}
+	}
+
 	public static bool Created
 	{
 		get
@@ -56,6 +69,11 @@ public static class MainMenuNativeButtons
 
 	public static void Tick()
 	{
+		// the game rebuilt its menu and our buttons went with it: build them again
+		if (_built && !Created && Core.mainMenu)
+		{
+			_built = false;
+		}
 		if (!_built && Core.mainMenu)
 		{
 			MainMenu instance = Singleton<MainMenu>.Instance;

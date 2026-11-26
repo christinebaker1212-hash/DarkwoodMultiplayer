@@ -61,7 +61,8 @@ public static class MainMenuHostJoinUI
 
 	public static void Draw()
 	{
-		if (Core.mainMenu && IsTopLevelMenuOpen() && !MainMenuNativeButtons.Created && !CoopUI.IsOpen)
+		// the game's own HOST / JOIN buttons aren't showing on the main menu: this box stands in
+		if (Core.mainMenu && IsTopLevelMenuOpen() && !MainMenuNativeButtons.Visible && !CoopUI.IsOpen && !CoopMenuList.Active && !SaveSlotPickerUI.Active)
 		{
 			if (_boxStyle == null)
 			{

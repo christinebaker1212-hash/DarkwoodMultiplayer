@@ -44,7 +44,16 @@ public static class CoopConfig
 		LastRoomKey = cfg.Bind("Co-op", "LastServerKey", "", "Remembered: the last game's key (a hash of its name and password - the password itself isn't stored)");
 		LastSteamHost = cfg.Bind("Co-op", "LastSteamHost", "", "Remembered: the Steam host of the last game you joined over Steam");
 		ShowPing = cfg.Bind("Co-op", "ShowPing", true, "Show the co-op info (players, ping, invite code) at the top of the screen while the pause menu is open (or while holding Tab)");
-		ReviveButton = cfg.Bind("Co-op", "ReviveControllerButton", (UnityEngine.KeyCode)330, "Controller button to hold next to a downed friend to revive them (besides F and the game's interact button). JoystickButton0 = A (Xbox) / Cross (PlayStation), JoystickButton1 = B / Circle, JoystickButton2 = X / Square, JoystickButton3 = Y / Triangle. None = off.");
+		try
+		{
+			ReviveButton = cfg.Bind("Co-op", "ReviveControllerButton", (UnityEngine.KeyCode)330, "Controller button to hold next to a downed friend to revive them (besides F and the game's interact button). JoystickButton0 = A (Xbox) / Cross (PlayStation), JoystickButton1 = B / Circle, JoystickButton2 = X / Square, JoystickButton3 = Y / Triangle. None = off.");
+		}
+		catch (Exception ex)
+		{
+			// (the setting just isn't there; F and the interact button still revive)
+			Plugin.Log?.LogWarning("[Startup] ReviveControllerButton setting unavailable: " + ex.Message);
+			ReviveButton = null;
+		}
 		ShowNames = cfg.Bind("Co-op", "ShowNames", true, "Show other players' names above them (also: N in game, or the co-op box in the pause menu)");
 	}
 

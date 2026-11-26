@@ -23,12 +23,31 @@ public static class DownedUI
 		if (DownedSync.Downed)
 		{
 			DrawCountdown();
-			Hint(new Rect(((float)Screen.width - 560f) * 0.5f, (float)Screen.height * 0.3f + 130f, 560f, 30f), "You're down! A friend can revive you by holding F next to you.");
+			Hint(new Rect(((float)Screen.width - 560f) * 0.5f, (float)Screen.height * 0.3f + 130f, 560f, 30f), "You're down! A friend can revive you by holding F (or " + ReviveButtonName() + " on a controller) next to you.");
 		}
 		DrawDownedFriends();
 		if (DownedSync.PeerDowned && DownedSync.HoldingRevive && (Object)(object)peerPuppet != (Object)null)
 		{
 			DrawReviveBar(peerPuppet);
+		}
+	}
+
+	public static string ReviveButtonName()
+	{
+		switch ((int)(CoopConfig.ReviveButton?.Value ?? ((KeyCode)330)))
+		{
+		case 330:
+			return "A";
+		case 331:
+			return "B";
+		case 332:
+			return "X";
+		case 333:
+			return "Y";
+		case 0:
+			return "interact";
+		default:
+			return CoopConfig.ReviveButton.Value.ToString();
 		}
 	}
 
@@ -61,14 +80,14 @@ public static class DownedUI
 			bool flag = num3 <= DownedSync.ReviveRange;
 			if (!DownedSync.Downed)
 			{
-				Hint(new Rect(((float)Screen.width - 600f) * 0.5f, 54f + (float)num * 34f, 600f, 30f), flag ? $"{text} is down - HOLD F to revive them ({num2}s)" : $"{text} is down! Go to them and hold F to revive ({num2}s)");
+				Hint(new Rect(((float)Screen.width - 600f) * 0.5f, 54f + (float)num * 34f, 600f, 30f), flag ? $"{text} is down - HOLD F / {ReviveButtonName()} to revive them ({num2}s)" : $"{text} is down! Go to them and hold F / {ReviveButtonName()} to revive ({num2}s)");
 				num++;
 			}
 			Vector3 val2 = val.WorldToScreenPoint(((Component)puppet).transform.position);
 			float x = val2.x;
 			float num4 = (float)Screen.height - val2.y;
 			bool flag2 = val2.z > 0f && x >= 0f && x <= (float)Screen.width && num4 >= 0f && num4 <= (float)Screen.height;
-			string text2 = (flag ? "HOLD F" : ("DOWN " + num2 + "s"));
+			string text2 = (flag ? ("HOLD F / " + ReviveButtonName()) : ("DOWN " + num2 + "s"));
 			if (flag2)
 			{
 				if (!DownedSync.HoldingRevive)

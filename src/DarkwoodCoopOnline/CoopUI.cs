@@ -451,7 +451,7 @@ public static class CoopUI
 			{
 				Plugin.Instance?.StopSessionExternal();
 			}
-			GUILayout.Label("Tab: co-op info any time  ·  N: names  ·  hold F next to a downed friend to revive", _small, Array.Empty<GUILayoutOption>());
+			GUILayout.Label("Tab: co-op info any time  ·  N: names  ·  hold F (controller: " + DownedUI.ReviveButtonName() + ") next to a downed friend to revive", _small, Array.Empty<GUILayoutOption>());
 		}, "CO-OP", _window, (GUILayoutOption[])(object)new GUILayoutOption[1] { GUILayout.Width(300f) });
 	}
 

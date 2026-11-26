@@ -265,6 +265,19 @@ public static class DownedSync
 		return instance.rewiredPlayer.GetButton("Primary Action");
 	}
 
+	private static bool ControllerReviveHeld()
+	{
+		try
+		{
+			KeyCode keyCode = CoopConfig.ReviveButton?.Value ?? ((KeyCode)330);
+			return (int)keyCode != 0 && Input.GetKey(keyCode);
+		}
+		catch
+		{
+			return false;
+		}
+	}
+
 	private static bool IsNativelySelected(RemotePlayerPuppet peerPuppet)
 	{
 		Player instance = Player.Instance;
@@ -550,9 +563,11 @@ public static class DownedSync
 		ApplyRescuerBoost(instance);
 		EnsureRevivePrompt(peerPuppet);
 		float num = Vector3.Distance(((Component)instance).transform.position, ((Component)peerPuppet).transform.position);
-		bool key = Input.GetKey((KeyCode)102);
+		// keyboard F, the controller revive button (A / Cross by default), or the game's own interact action;
+		// on a controller there's no cursor to aim at them, so being in range is enough
+		bool key = Input.GetKey((KeyCode)102) || ControllerReviveHeld();
 		bool flag = IsNativelySelected(peerPuppet);
-		bool flag2 = flag && PrimaryActionHeld();
+		bool flag2 = PrimaryActionHeld();
 		_diagTimer += dt;
 		if (_diagTimer >= 1f)
 		{

@@ -11,10 +11,10 @@ using Object = UnityEngine.Object;
 
 namespace DarkwoodCoopOnline;
 
-[BepInPlugin("com.felipe.darkwoodcooponline", "Darkwood Co-op Online", "0.4.3")]
+[BepInPlugin("com.felipe.darkwoodcooponline", "Darkwood Co-op Online", "0.4.4")]
 public class Plugin : BaseUnityPlugin
 {
-	public const string Version = "0.4.3";
+	public const string Version = "0.4.4";
 
 	internal static TimestampedLogSource Log;
 
@@ -69,14 +69,14 @@ public class Plugin : BaseUnityPlugin
 		Log = new TimestampedLogSource(Logger);
 		Instance = this;
 		Version version = Assembly.GetExecutingAssembly().GetName().Version;
-		Version version2 = new Version("0.4.3.0");
+		Version version2 = new Version("0.4.4.0");
 		if (version != version2)
 		{
-			Log.LogError("[VersionCheck] DESSINCRONIA: Plugin.Version='0.4.3' mas AssemblyVersion " + $"compilada='{version}' - alguém bumpou só um dos dois (Properties/AssemblyInfo.cs " + "precisa acompanhar Plugin.Version SEMPRE). Corrija antes de publicar.");
+			Log.LogError("[VersionCheck] DESSINCRONIA: Plugin.Version='0.4.4' mas AssemblyVersion " + $"compilada='{version}' - alguém bumpou só um dos dois (Properties/AssemblyInfo.cs " + "precisa acompanhar Plugin.Version SEMPRE). Corrija antes de publicar.");
 		}
 		else
 		{
-			Log.LogInfo("[VersionCheck] OK - Plugin.Version e AssemblyVersion batem (0.4.3).");
+			Log.LogInfo("[VersionCheck] OK - Plugin.Version e AssemblyVersion batem (0.4.4).");
 		}
 		Application.runInBackground = true;
 		CoopConfig.Bind(((BaseUnityPlugin)this).Config);

@@ -321,7 +321,7 @@ public static class EnemySync
 			Object.Destroy((Object)(object)((Component)c).gameObject);
 			return;
 		}
-		string text2 = MyTag + ":" + ((Object)((Component)c).gameObject).GetInstanceID();
+		string text2 = CoopRuntime.IdTag + ":" + ((Object)((Component)c).gameObject).GetInstanceID();
 		_ownedCache.Add(new OwnedEnemy
 		{
 			c = c,
@@ -992,14 +992,24 @@ public static class EnemySync
 				}
 				if ((Object)(object)val6 != (Object)null)
 				{
-					bool num9 = text.StartsWith("H:");
-					bool flag3 = CoopRuntime.Session != null && CoopRuntime.Session.Role == NetRole.Host;
-					if (!num9 || flag3)
+					// both of us set up the same enemy at once: the lower slot keeps it (the host is slot 0)
+					int num11 = CoopRuntime.SlotOfId(text);
+					int num12 = CoopRuntime.Session?.MySlot ?? 0;
+					if (num11 < 0 || num12 <= num11)
 					{
 						Plugin.Log.LogWarning("[EnemySync] ignorando spawn anunciado '" + text2 + "' id=" + text + " - já possuo um do mesmo tipo bem perto, reivindicado há pouco (provável eco de corrida) - não duplica.");
 						continue;
 					}
-					Plugin.Log.LogWarning("[EnemySync] desempate de spawn simultâneo: cedendo '" + text2 + "' que eu possuía (id local='" + text4 + "') pro anúncio do HOST (id=" + text + ") - host sempre manda.");
+					Plugin.Log.LogWarning("[EnemySync] desempate de spawn simultâneo: cedendo '" + text2 + "' que eu possuía (id local='" + text4 + "') pro anúncio de slot " + num11 + " (id=" + text + ").");
+					// everyone who already had my copy as a puppet drops it (it would stay frozen otherwise)
+					if (_announcedIds.Contains(text4))
+					{
+						if (_pendingRemovals == null)
+						{
+							_pendingRemovals = new List<string>();
+						}
+						_pendingRemovals.Add(text4);
+					}
 					_ownedById.Remove(text4);
 					_ownedSince.Remove(text4);
 					_ownedEventKey.Remove(text4);

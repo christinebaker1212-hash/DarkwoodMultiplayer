@@ -55,6 +55,47 @@ public static class CoopRuntime
 	public static void SetSession(CoopSession session)
 	{
 		Session = session;
+		_idTag = null;
+	}
+
+	private static string _idTag;
+
+	// Prefix for network ids this PC makes up (enemies, shadows): "P<slot>.<random>". Unity's object
+	// numbers repeat from PC to PC (two players loading the same area get the same numbers), so an id
+	// made of them alone - or tagged only "host" / "client", as with two players - collided between
+	// clients: one enemy's death landed on another, and some players' enemies never died.
+	public static string IdTag
+	{
+		get
+		{
+			if (_idTag == null)
+			{
+				_idTag = "P" + (Session?.MySlot ?? 0) + "." + new System.Random().Next(4096, 65535).ToString("x");
+			}
+			return _idTag;
+		}
+	}
+
+	// Which player made a network id (from IdTag; old-style "H:" = host). -1 = unknown
+	public static int SlotOfId(string id)
+	{
+		if (string.IsNullOrEmpty(id))
+		{
+			return -1;
+		}
+		if (id.StartsWith("H:", System.StringComparison.Ordinal))
+		{
+			return 0;
+		}
+		if (id[0] == 'P')
+		{
+			int num = id.IndexOf('.');
+			if (num > 1 && int.TryParse(id.Substring(1, num - 1), out var result))
+			{
+				return result;
+			}
+		}
+		return -1;
 	}
 }
 

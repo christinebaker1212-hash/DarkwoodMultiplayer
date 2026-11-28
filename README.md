@@ -7,7 +7,7 @@ relay server, friends join with an **invite code**, and the whole thing is tuned
 
 ## Install
 
-1. Download `DarkwoodCoopOnline-4P-v0.4.5.zip` (in [`release/`](release/)).
+1. Download `DarkwoodCoopOnline-4P-v0.4.6.zip` (in [`release/`](release/)).
 2. Unzip it **into the Darkwood game folder** (the one with `Darkwood.exe`), so that `winhttp.dll`,
    `doorstop_config.ini` and the `BepInEx` folder sit next to `Darkwood.exe`.
    If you had the old 2-player mod, just let it overwrite.

@@ -40,7 +40,7 @@ public static class ShadowSync
 				_localCache.Add(new LocalShadow
 				{
 					sc = val,
-					id = ((Object)val).GetInstanceID().ToString()
+					id = CoopRuntime.IdTag + ":" + ((Object)val).GetInstanceID()
 				});
 			}
 		}

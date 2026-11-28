@@ -443,6 +443,7 @@ public sealed class CoopSession
 		PerfDiagnostics.Begin("PlayerBurn.Poll");
 		SendIfAny(PlayerBurnVisualSync.PollChanges(), reliable: true);
 		PerfDiagnostics.End();
+		SendIfAny(SkinSync.Poll(), reliable: true);
 		PerfDiagnostics.Begin("DialogueState.Poll");
 		SendIfAny(DialogueStateSync.PollChanges(p, p), reliable: true);
 		PerfDiagnostics.End();
@@ -676,6 +677,7 @@ public sealed class CoopSession
 		PauseSync.OnPeerLeft(slot);
 		LobbySync.OnPeerLeft(slot);
 		VoiceSync.OnPeerLeft(slot);
+		SkinSync.Forget(slot);
 		LocationOwnership.OnPeerLeft(slot);
 		Plugin.Log.LogInfo($"[Session] '{name}' (slot {slot}) left.");
 		if (_role == NetRole.Client && slot == 0)
@@ -985,6 +987,9 @@ public sealed class CoopSession
 		case PacketType.MonsterProjectileLanded:
 			MonsterRangedAttackSync.ApplyLanded(packetReader);
 			break;
+		case PacketType.PlayerSkin:
+			SkinSync.Apply(packetReader, from, _net.NameOf(from) ?? ("Player " + (from + 1)));
+			break;
 		case PacketType.PlayerBurningState:
 			PlayerBurnVisualSync.ApplyState(packetReader, EnsurePuppet(from));
 			break;
@@ -1103,6 +1108,7 @@ public sealed class CoopSession
 		WorkbenchSync.Reset();
 		MonsterRangedAttackSync.Reset();
 		PlayerBurnVisualSync.Reset();
+		SkinSync.Reset();
 		SharedVisionSync.Reset();
 		PeerNameTagSync.Reset();
 		TrapPlaceSync.Reset();

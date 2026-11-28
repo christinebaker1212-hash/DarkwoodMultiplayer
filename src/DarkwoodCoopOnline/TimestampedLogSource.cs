@@ -39,7 +39,7 @@ internal sealed class TimestampedLogSource
 	// disk writes every time something moves). Connection / session lines are always kept.
 	public static bool Verbose;
 
-	private static readonly string[] AlwaysKeep = new string[13] { "[Relay]", "[Net]", "[Join]", "[Host]", "[Session]", "[PortMap]", "[Steam]", "[Notice]", "[LanSaveTransfer]", "[World]", "[VersionCheck]", "[StableIdentity]", "===" };
+	private static readonly string[] AlwaysKeep = new string[15] { "[SkinExport]", "[Skins]", "[Relay]", "[Net]", "[Join]", "[Host]", "[Session]", "[PortMap]", "[Steam]", "[Notice]", "[LanSaveTransfer]", "[World]", "[VersionCheck]", "[StableIdentity]", "===" };
 
 	public void LogInfo(object data)
 	{

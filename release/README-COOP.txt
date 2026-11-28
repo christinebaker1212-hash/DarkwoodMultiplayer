@@ -1,4 +1,4 @@
-DARKWOOD CO-OP ONLINE - 4 PLAYERS  (v0.4.6)
+DARKWOOD CO-OP ONLINE - 4 PLAYERS  (v0.4.8)
 ===========================================
 
 Up to 4 players in one Darkwood world. Networking works like Moemon Emerald Kai
@@ -41,6 +41,8 @@ IN THE GAME
   F1      teleport to the nearest friend (if you're stuck)
   F10     leave the game (host: stop hosting)
   ~       debug panel (stuck cutscene / dream fixes)
+  F5      export the character's sprite sheets for making custom skins (see below)
+  F6      switch to the next skin in CoopSkins (and back to the normal look)
 
 HOW THE CODE WORKS
 ------------------
@@ -51,10 +53,27 @@ Steam's relay - it works behind any router. Same kind of code, typed the same wa
  * The co-op window (0) has a spare Steam code if the main one doesn't connect.
  * Non-Steam copies (GOG): router code, the network list, or a VPN address.
 
+CUSTOM CHARACTER SKINS - STEP 1: EXPORT
+---------------------------------------
+Only one person needs to do this. Load into a world, stand somewhere safe and
+press F5. After a few seconds a folder opens: CoopSkins\export in the Darkwood
+folder. It holds every sprite sheet the player character uses (every weapon and
+item) plus frames.json, the map of which frame is where. Zip that whole export
+folder and send it to whoever is making the skins.
+Change or turn off the key: [Skins] ExportKey in the config.
+
+CUSTOM CHARACTER SKINS - STEP 2: WEAR ONE
+-----------------------------------------
+A skin is a folder in CoopSkins (for example CoopSkins\bunny) with repainted
+copies of the exported sheets, same file names. Everyone puts the same skin
+folders in their CoopSkins. In game, F6 switches your own skin; everyone else
+sees it on you. Friends without that folder just see you normally.
+
 SETTINGS
 --------
 BepInEx\config\com.felipe.darkwoodcooponline.cfg
   [Co-op]  PlayerName, ServerName, ServerPassword, WelcomeNote, OpenRouter
+  [Skins]  ExportKey (F5), CycleKey (F6), MySkin (your skin's folder name)
   [Debug]  VerboseLog = true only when reporting a bug (send BepInEx\LogOutput.log)
 
 Original 2-player mod by Felipesfx. Darkwood by Acid Wizard Studio.

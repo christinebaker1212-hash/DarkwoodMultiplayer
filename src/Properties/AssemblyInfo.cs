@@ -7,6 +7,6 @@ using System.Runtime.Versioning;
 [assembly: AssemblyTitle("DarkwoodCoopOnline")]
 [assembly: AssemblyDescription("Co-op online host-autoritativo para Darkwood (BepInEx)")]
 [assembly: AssemblyProduct("DarkwoodCoopOnline")]
-[assembly: AssemblyFileVersion("0.4.8.0")]
+[assembly: AssemblyFileVersion("0.4.9.0")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("0.4.8.0")]
+[assembly: AssemblyVersion("0.4.9.0")]

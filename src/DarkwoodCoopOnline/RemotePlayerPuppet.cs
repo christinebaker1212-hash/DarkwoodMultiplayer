@@ -198,6 +198,9 @@ public sealed class RemotePlayerPuppet : CharBase
 
 	public bool HasState => _hasState;
 
+	// Time.unscaledTime of the last state received
+	public float LastStateAt { get; private set; } = -999f;
+
 	// for SkinSync: the two sprites that draw this player
 	internal GameObject TorsoObject => ((Object)(object)_torso != (Object)null) ? ((Component)_torso).gameObject : null;
 
@@ -405,6 +408,7 @@ public sealed class RemotePlayerPuppet : CharBase
 		PushSample(pos);
 		_currentClip = (string.IsNullOrEmpty(clip) ? "Idle" : clip);
 		_hasState = true;
+		LastStateAt = Time.unscaledTime;
 		_torsoFrame = torsoFrame;
 		_legsClip = legsClip;
 		_legsRot = legsRot;

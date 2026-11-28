@@ -11,10 +11,10 @@ using Object = UnityEngine.Object;
 
 namespace DarkwoodCoopOnline;
 
-[BepInPlugin("com.felipe.darkwoodcooponline", "Darkwood Co-op Online", "0.4.8")]
+[BepInPlugin("com.felipe.darkwoodcooponline", "Darkwood Co-op Online", "0.4.9")]
 public class Plugin : BaseUnityPlugin
 {
-	public const string Version = "0.4.8";
+	public const string Version = "0.4.9";
 
 	internal static TimestampedLogSource Log;
 
@@ -69,14 +69,14 @@ public class Plugin : BaseUnityPlugin
 		Log = new TimestampedLogSource(Logger);
 		Instance = this;
 		Version version = Assembly.GetExecutingAssembly().GetName().Version;
-		Version version2 = new Version("0.4.8.0");
+		Version version2 = new Version("0.4.9.0");
 		if (version != version2)
 		{
-			Log.LogError("[VersionCheck] DESSINCRONIA: Plugin.Version='0.4.8' mas AssemblyVersion " + $"compilada='{version}' - alguém bumpou só um dos dois (Properties/AssemblyInfo.cs " + "precisa acompanhar Plugin.Version SEMPRE). Corrija antes de publicar.");
+			Log.LogError("[VersionCheck] DESSINCRONIA: Plugin.Version='0.4.9' mas AssemblyVersion " + $"compilada='{version}' - alguém bumpou só um dos dois (Properties/AssemblyInfo.cs " + "precisa acompanhar Plugin.Version SEMPRE). Corrija antes de publicar.");
 		}
 		else
 		{
-			Log.LogInfo("[VersionCheck] OK - Plugin.Version e AssemblyVersion batem (0.4.8).");
+			Log.LogInfo("[VersionCheck] OK - Plugin.Version e AssemblyVersion batem (0.4.9).");
 		}
 		Application.runInBackground = true;
 		ConfigFile cfg = ((BaseUnityPlugin)this).Config;
@@ -342,6 +342,7 @@ public class Plugin : BaseUnityPlugin
 		PlayerVisionWatchdog.Tick();
 		CharacterMessageSync.Tick();
 		DreamSync.Tick();
+		OutsideLocationSync.Tick();
 		if (_debugKeys.Value)
 		{
 		if (Input.GetKeyDown((KeyCode)267))

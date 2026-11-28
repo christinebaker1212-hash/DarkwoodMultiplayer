@@ -21,7 +21,7 @@ namespace DarkwoodCoopOnline.Net;
 public static class Proto
 {
 	// Bump whenever the wire format or a game packet changes: older and newer games refuse each other.
-	public const ushort Version = 1;
+	public const ushort Version = 2;   // 2: area changes carry the door used (v0.4.9)
 
 	public const int DefaultPort = 27115;      // TCP, the host's relay server (and up to +6: the invite code carries which)
 

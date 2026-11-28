@@ -1,4 +1,4 @@
-DARKWOOD CO-OP ONLINE - 4 PLAYERS  (v0.4.8)
+DARKWOOD CO-OP ONLINE - 4 PLAYERS  (v0.4.9)
 ===========================================
 
 Up to 4 players in one Darkwood world. Networking works like Moemon Emerald Kai
